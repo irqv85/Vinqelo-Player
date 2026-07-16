@@ -1,0 +1,12 @@
+# Interfaz de escritorio
+PySide6>=6.7,<7
+
+# Reproduccion local (requiere VLC instalado en Windows)
+python-vlc>=3.0.20123,<4
+
+# Lectura de metadatos de audio
+mutagen>=1.47,<2
+
+# Empaquetado futuro como .exe
+PyInstaller>=6.7,<7
+

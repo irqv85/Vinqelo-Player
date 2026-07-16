@@ -1,0 +1,2 @@
+"""Paginas del area central."""
+

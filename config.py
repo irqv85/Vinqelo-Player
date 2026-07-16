@@ -1,0 +1,41 @@
+"""Configuracion compartida de Vinqelo Player."""
+
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+
+APP_NAME = "Vinqelo Player"
+APP_VERSION = "0.1.0"
+PROJECT_ROOT = Path(__file__).resolve().parent
+
+
+def _is_frozen() -> bool:
+    return bool(getattr(sys, "frozen", False))
+
+
+def _runtime_root() -> Path:
+    custom_root = os.environ.get("VINQELO_DATA_DIR")
+    if custom_root:
+        return Path(custom_root).expanduser().resolve()
+
+    if _is_frozen():
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        base = Path(local_app_data) if local_app_data else Path.home() / "AppData" / "Local"
+        return base / APP_NAME
+
+    return PROJECT_ROOT
+
+
+RUNTIME_ROOT = _runtime_root()
+ASSETS_DIR = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT)) / "assets"
+DATABASE_PATH = (
+    RUNTIME_ROOT / "library.sqlite3"
+    if _is_frozen() or os.environ.get("VINQELO_DATA_DIR")
+    else PROJECT_ROOT / "database" / "library.sqlite3"
+)
+LOG_DIR = RUNTIME_ROOT / "logs"
+LOG_PATH = LOG_DIR / "vinqelo_player.log"
+

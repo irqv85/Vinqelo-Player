@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.sqlite3-shm
+*.sqlite3-wal
+database/*.sqlite3
+.venv/
+.vscode/
+build/
+dist/
+*.spec
+logs/*.log
