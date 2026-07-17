@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from enum import Enum
 from pathlib import Path
 
-from mutagen import File as MutagenFile
 from PySide6.QtCore import QObject, QTimer, Signal
 
 from library.audio_formats import SUPPORTED_AUDIO_EXTENSIONS
+from library.track_metadata import TrackDetails, read_track_details
 
 
 class PlaybackState(str, Enum):
@@ -28,7 +29,9 @@ class PlayerController(QObject):
     state_changed = Signal(str)
     position_changed = Signal(int, int)
     track_changed = Signal(str, str, str)
+    track_details_changed = Signal(object)
     queue_navigation_changed = Signal(bool, bool)
+    queue_changed = Signal(object, int)
     error_occurred = Signal(str)
 
     def __init__(self, parent: QObject | None = None) -> None:
@@ -36,9 +39,12 @@ class PlayerController(QObject):
         self._logger = logging.getLogger(__name__)
         self._state = PlaybackState.STOPPED
         self._queue: list[Path] = []
+        self._folder_metadata: dict[str, tuple[str, str]] = {}
         self._current_index = -1
         self._media = None
         self._volume = 70
+        self._preamp_db = 0.0
+        self._band_gains = [0.0] * 10
         self._ended_handled = False
 
         try:
@@ -47,6 +53,7 @@ class PlayerController(QObject):
             self._vlc = vlc
             self._instance = vlc.Instance("--no-video", "--quiet")
             self._player = self._instance.media_player_new()
+            self._equalizer = vlc.AudioEqualizer()
             if self._player is None:
                 raise RuntimeError("VLC no pudo crear un reproductor de audio")
             self._logger.info(
@@ -84,6 +91,7 @@ class PlayerController(QObject):
         *,
         start_index: int = 0,
         autoplay: bool = True,
+        folder_metadata: dict[str, tuple[str, str]] | None = None,
     ) -> bool:
         valid_paths: list[Path] = []
         for candidate in file_paths:
@@ -104,6 +112,7 @@ class PlayerController(QObject):
 
         self.stop(clear_track=False)
         self._queue = valid_paths
+        self._folder_metadata = folder_metadata or {}
         self._current_index = start_index
         return self._load_current(autoplay=autoplay)
 
@@ -116,11 +125,22 @@ class PlayerController(QObject):
         try:
             self._media = self._instance.media_new(str(path))
             self._player.set_media(self._media)
+            self._player.set_equalizer(self._equalizer)
             self._player.audio_set_volume(self._volume)
             self._ended_handled = False
 
-            title, artist = read_display_metadata(path)
-            self.track_changed.emit(title, artist, str(path))
+            details = read_track_details(path)
+            authoritative = self._folder_metadata.get(str(path))
+            if authoritative:
+                artist, album = authoritative
+                details = replace(
+                    details,
+                    artist=artist,
+                    album=album,
+                    album_artist=artist,
+                )
+            self.track_changed.emit(details.title, details.artist, str(path))
+            self.track_details_changed.emit(details)
             self.position_changed.emit(0, 0)
             self._emit_queue_navigation()
 
@@ -205,6 +225,57 @@ class PlayerController(QObject):
             self._logger.exception("No se pudo cambiar el volumen")
             self._emit_error(f"No se pudo cambiar el volumen. Detalle: {exc}")
 
+    def set_preamp(self, decibels: float) -> None:
+        self._preamp_db = max(-20.0, min(20.0, float(decibels)))
+        self._apply_equalizer()
+
+    def set_equalizer_bands(self, bands: list[tuple[int, float]]) -> None:
+        self._band_gains = [0.0] * 10
+        for index, gain in bands:
+            if 0 <= int(index) < 10:
+                self._band_gains[int(index)] = max(-20.0, min(20.0, float(gain)))
+        self._apply_equalizer()
+
+    def _apply_equalizer(self) -> None:
+        try:
+            self._equalizer.set_preamp(self._preamp_db)
+            for index in range(10):
+                self._equalizer.set_amp_at_index(self._band_gains[index], index)
+            if self._player.set_equalizer(self._equalizer) == -1:
+                raise RuntimeError("VLC rechazó el ajuste del ecualizador")
+        except Exception as exc:
+            self._logger.exception("No se pudo ajustar el ecualizador")
+            self._emit_error(f"No se pudo ajustar el ecualizador. Detalle: {exc}")
+
+    def refresh_current_metadata(self) -> None:
+        path = self.current_file
+        if path is None:
+            return
+        try:
+            details = read_track_details(path)
+            authoritative = self._folder_metadata.get(str(path))
+            if authoritative:
+                artist, album = authoritative
+                details = replace(details, artist=artist, album=album, album_artist=artist)
+            self.track_changed.emit(details.title, details.artist, str(path))
+            self.track_details_changed.emit(details)
+        except Exception:
+            self._logger.warning("No se pudieron refrescar los metadatos de %s", path, exc_info=True)
+
+    def replace_queue_paths(self, renamed: object) -> None:
+        if not isinstance(renamed, dict) or not renamed:
+            return
+        normalized = {
+            str(Path(old).resolve()): Path(new).resolve() for old, new in renamed.items()
+        }
+        self._queue = [normalized.get(str(path), path) for path in self._queue]
+        for old_path, new_path in normalized.items():
+            metadata = self._folder_metadata.pop(old_path, None)
+            if metadata is not None:
+                self._folder_metadata[str(new_path)] = metadata
+        self._emit_queue_navigation()
+        self.refresh_current_metadata()
+
     def previous(self) -> None:
         if self.current_file is None:
             return
@@ -219,6 +290,31 @@ class PlayerController(QObject):
             return
         self._current_index += 1
         self._load_current(autoplay=True)
+
+    def enqueue_files(
+        self,
+        file_paths: list[Path],
+        *,
+        folder_metadata: dict[str, tuple[str, str]] | None = None,
+    ) -> int:
+        added = 0
+        for candidate in file_paths:
+            path = Path(candidate).expanduser().resolve()
+            if not path.is_file() or path.suffix.lower() not in SUPPORTED_AUDIO_EXTENSIONS:
+                continue
+            self._queue.append(path)
+            added += 1
+        if folder_metadata:
+            self._folder_metadata.update(folder_metadata)
+        if added:
+            self._emit_queue_navigation()
+        return added
+
+    def play_index(self, index: int) -> bool:
+        if not 0 <= index < len(self._queue):
+            return False
+        self._current_index = index
+        return self._load_current(autoplay=True)
 
     def _poll_player(self) -> None:
         try:
@@ -265,6 +361,7 @@ class PlayerController(QObject):
             self._current_index > 0,
             0 <= self._current_index < len(self._queue) - 1,
         )
+        self.queue_changed.emit([str(path) for path in self._queue], self._current_index)
 
     def _emit_error(self, message: str) -> None:
         self._logger.warning(message)
@@ -275,6 +372,9 @@ class PlayerController(QObject):
         try:
             self._player.stop()
             self._player.release()
+            release_equalizer = getattr(self._equalizer, "release", None)
+            if callable(release_equalizer):
+                release_equalizer()
             self._instance.release()
         except Exception:
             self._logger.exception("No se pudo liberar completamente el motor VLC")
@@ -282,26 +382,5 @@ class PlayerController(QObject):
 
 def read_display_metadata(path: Path) -> tuple[str, str]:
     """Obtiene título y artista, usando el nombre del archivo como respaldo."""
-    title = path.stem
-    artist = "Artista desconocido"
-    try:
-        audio = MutagenFile(path, easy=True)
-        if audio is None or not audio.tags:
-            return title, artist
-        title = _first_tag(audio.tags.get("title")) or title
-        artist = _first_tag(audio.tags.get("artist")) or artist
-    except Exception:
-        logging.getLogger(__name__).warning(
-            "No se pudieron leer los metadatos de %s; se usará el nombre del archivo",
-            path,
-            exc_info=True,
-        )
-    return title, artist
-
-
-def _first_tag(value: object) -> str:
-    if isinstance(value, (list, tuple)) and value:
-        return str(value[0]).strip()
-    if isinstance(value, str):
-        return value.strip()
-    return ""
+    details: TrackDetails = read_track_details(path)
+    return details.title, details.artist

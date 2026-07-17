@@ -9,3 +9,4 @@ build/
 dist/
 *.spec
 logs/*.log
+cover_cache/

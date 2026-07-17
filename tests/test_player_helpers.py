@@ -20,7 +20,7 @@ class PlayerHelperTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             path = Path(temporary_directory) / "Mi canción.mp3"
             path.touch()
-            with self.assertLogs("player.controller", level="WARNING"):
+            with self.assertLogs("library.track_metadata", level="WARNING"):
                 title, artist = read_display_metadata(path)
             self.assertEqual(title, "Mi canción")
             self.assertEqual(artist, "Artista desconocido")

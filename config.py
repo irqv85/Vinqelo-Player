@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 APP_NAME = "Vinqelo Player"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.7.0"
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 
@@ -38,4 +38,4 @@ DATABASE_PATH = (
 )
 LOG_DIR = RUNTIME_ROOT / "logs"
 LOG_PATH = LOG_DIR / "vinqelo_player.log"
-
+COVER_CACHE_DIR = RUNTIME_ROOT / "cover_cache"

@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 import sys
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from config import APP_NAME, APP_VERSION, DATABASE_PATH
+from config import APP_NAME, APP_VERSION, ASSETS_DIR, DATABASE_PATH
 from database.manager import DatabaseManager
 from logging_config import configure_logging
 from ui.main_window import MainWindow
@@ -20,7 +21,9 @@ def main() -> int:
 
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
+    app.setOrganizationName("Vinqelo")
     app.setApplicationVersion(APP_VERSION)
+    app.setWindowIcon(QIcon(str(ASSETS_DIR / "icons" / "vinqelo-v.png")))
     app.setStyle("Fusion")
     app.setStyleSheet(APP_STYLESHEET)
 
@@ -45,4 +48,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

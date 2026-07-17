@@ -9,10 +9,10 @@ class StatCard(QFrame):
     def __init__(self, label: str) -> None:
         super().__init__()
         self.setObjectName("statCard")
-        self.setMinimumHeight(92)
+        self.setMinimumHeight(76)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 13, 16, 13)
+        layout.setContentsMargins(14, 10, 14, 10)
         layout.setSpacing(3)
 
         self.value_label = QLabel("0")
@@ -24,4 +24,3 @@ class StatCard(QFrame):
 
     def set_value(self, value: int) -> None:
         self.value_label.setText(str(value))
-
