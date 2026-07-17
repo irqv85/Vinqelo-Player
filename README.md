@@ -1,13 +1,148 @@
 # Vinqelo Player
 
-Primera base ejecutable del reproductor de musica local para Windows.
+Vinqelo Player es un reproductor de música local para Windows, construido con
+Python 3.12, PySide6, SQLite, VLC y Mutagen. Organiza la colección según las
+carpetas reales del usuario y ofrece una interfaz oscura inspirada en los
+reproductores clásicos de escritorio.
 
-## Requisitos
+## Funciones incluidas
 
+### Reproducción
+
+- MP3, FLAC, WAV, OGG, M4A y AAC mediante VLC.
+- Reproducir, pausar, detener, pista anterior y pista siguiente.
+- Barra de progreso, duración, búsqueda dentro de la pista y volumen persistente.
+- Reproducción consecutiva de carpetas, álbumes, compilaciones y listas.
+- Cola real con pista actual, siguiente y pistas pendientes.
+- Clic derecho para añadir cualquier pista a la cola.
+- Resaltado automático de la pista que está sonando sin mover el scroll del usuario.
+- Panel inferior con carátula, título, artista, álbum, año, formato y calidad.
+
+### Biblioteca basada en carpetas
+
+Vinqelo respeta esta jerarquía física:
+
+```text
+Mi biblioteca/
+  Artista/
+    Álbum/
+      01 - Canción.mp3
+      02 - Otra canción.flac
+```
+
+- La carpeta de primer nivel define al artista.
+- La carpeta interior define el álbum.
+- Las etiquetas internas nunca cambian automáticamente ese artista o álbum.
+- Las pistas colocadas directamente dentro del artista se reúnen en
+  `Pistas sueltas`.
+- Carpetas como `Vallenatos varios`, `Mix`, `Playlist`, `Spotify` o similares
+  pueden clasificarse como compilaciones de `Varios artistas`.
+- Carpetas, artistas, álbumes y listas muestran cantidad de pistas y duración total.
+- La sección Carpetas permite navegar por toda la estructura importada.
+
+### Artistas, álbumes y compilaciones
+
+- Artistas representados mediante una imagen circular o collage de sus álbumes.
+- Vista de álbumes con carátula, título, artista, pistas y duración.
+- Lista de pistas al abrir un álbum o artista.
+- Opción para reproducir consecutivamente todos los álbumes de un artista.
+- Sección independiente para compilaciones.
+- Búsqueda dentro de Artistas, Álbumes, Compilaciones y listas de pistas.
+
+### Carátulas e imágenes
+
+- Prioridad para `cover.jpg`, `cover.png`, `folder.jpg`, `folder.png`,
+  `front.jpg` y `front.png`.
+- Carátula genérica cuando no hay una imagen disponible.
+- Búsqueda de carátulas musicales mediante Deezer, MusicBrainz y Cover Art Archive.
+- Ventana con varias opciones antes de escoger una imagen de internet.
+- Selección manual de imágenes guardadas en el equipo.
+- Clic derecho sobre artistas y álbumes para fijar una imagen permanente.
+- Caché local: las imágenes no se descargan nuevamente si la colección no cambió.
+- La reproducción inferior conserva la carátula propia del álbum o pista actual.
+
+### Búsqueda
+
+- Buscador global de canciones, artistas y álbumes.
+- Espera breve al escribir para no consultar SQLite con cada tecla.
+- Buscadores locales en artistas, álbumes, compilaciones y pistas.
+- Doble clic en un resultado para reproducir su álbum desde esa canción.
+
+### Listas de reproducción
+
+- Creación de listas personales persistentes en SQLite.
+- Clic derecho sobre una canción → **Añadir a lista de reproducción…**.
+- Creación de una lista nueva durante el mismo proceso.
+- Reproducción completa desde cualquier pista.
+- Eliminación de canciones y listas.
+- Prevención de duplicados dentro de una misma lista.
+- Cantidad de canciones y duración total visibles.
+
+### Smart Playlist y estadísticas
+
+- **Global:** canciones más escuchadas de toda la biblioteca.
+- **New:** canciones agregadas durante los últimos 30 días que más se escuchan.
+- **Por artista:** lista independiente con las canciones más escuchadas de cada artista.
+- Cantidad de pistas y duración total en cada Smart Playlist.
+- Rankings de artistas y canciones según tiempo real acumulado.
+- Una reproducción sólo se valida después de 30 segundos escuchados.
+- Los rankings principales comienzan a mostrar resultados después de tres escuchas válidas.
+- El tiempo pausado no aumenta las estadísticas.
+
+### Edición de títulos y datos oficiales
+
+Desde la sección Carpetas:
+
+- Clic derecho en una pista → **Editar título de la pista…**.
+- Se actualizan SQLite y la etiqueta de audio cuando el formato permite escritura.
+- El archivo físico también se renombra conservando su extensión:
+
+  ```text
+  track 01.mp3 → Nombre de la pista.mp3
+  ```
+
+- Se filtran caracteres que Windows no admite en nombres de archivo.
+- Nunca se sobrescribe silenciosamente un archivo existente.
+- La cola activa se actualiza aunque la canción esté reproduciéndose.
+- Clic derecho en un álbum → **Buscar datos del álbum en internet…**.
+- MusicBrainz muestra diferentes ediciones y su lista oficial de pistas.
+- Tabla comparativa editable antes de aplicar títulos manual o masivamente.
+- Este proceso no cambia el artista ni el álbum definidos por las carpetas.
+
+### Consola de sonido
+
+- Botón de efectos situado junto a Stop.
+- Preamplificador VLC de −20 a +20 dB.
+- Punto de resistencia en +6 dB: hay que soltar y volver a mover el fader para
+  superar el nivel recomendado.
+- Ecualizador configurable de seis bandas.
+- Ganancia independiente de −20 a +20 dB por banda.
+- Selector de frecuencia debajo de cada banda, expresado en Hz o kHz.
+- Frecuencias compatibles con las diez bandas nativas de VLC, desde 31,25 Hz
+  hasta 16 kHz.
+- Medidor VU LED vertical y dinámico junto al Preamp.
+- Configuración de sonido guardada entre ejecuciones.
+- No se incluye ajuste de tempo, porque fue retirado para preservar la calidad.
+
+### Interfaz
+
+- Tema oscuro, limpio y adaptable a diferentes tamaños de ventana.
+- Ventana sin barra nativa, con bordes redondeados y controles propios.
+- Barra lateral para Biblioteca, Buscar, Artistas, Álbumes, Compilaciones,
+  Carpetas, Smart Playlist, listas personales, reproducción actual y cola.
+- Identidad visual propia con el icono azul de Vinqelo.
+- Menús y ventanas emergentes adaptados al tema oscuro.
+- Se mantiene el scroll del usuario al avanzar automáticamente de pista.
+
+## Ejecutar desde el código fuente
+
+### Requisitos
+
+- Windows de 64 bits.
 - Python 3.12 de 64 bits.
-- VLC Media Player de 64 bits (se utilizara en el bloque de reproduccion).
+- VLC Media Player de 64 bits.
 
-## Preparar el entorno en Visual Studio Code
+### Preparar el entorno
 
 ```powershell
 py -3.12 -m venv .venv
@@ -16,104 +151,74 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-En Visual Studio Code, seleccione `.venv` como interprete de Python.
-
-## Ejecutar
+Después puede ejecutar:
 
 ```powershell
 python main.py
 ```
 
-También puede iniciar la aplicación sin abrir Visual Studio Code haciendo doble
-clic en `Iniciar Vinqelo Player.bat`. El archivo utiliza `pythonw.exe` para abrir
-la interfaz sin dejar una consola visible.
-
-En desarrollo, la biblioteca se crea en `database/library.sqlite3` y los errores
-se guardan en `logs/vinqelo_player.log`. En una futura version empaquetada, esos
-archivos se ubicaran en la carpeta de datos local del usuario de Windows.
-
-## Alcance de esta version
-
-- Ventana principal oscura y adaptable.
-- Interfaz compacta de biblioteca inspirada en reproductores clásicos como Clementine.
-- Identidad visual propia con el icono V azul.
-- Ventana sin barra nativa, con esquinas redondeadas y controles propios.
-- Metadatos completos de álbum y calidad técnica de la pista actual.
-- Carátulas incrustadas, locales o recuperadas mediante MusicBrainz y Cover Art Archive.
-- Navegacion entre Biblioteca, Buscar, Artistas, Albumes, Compilaciones y Carpetas.
-- Cuadricula visual de albumes con caratula, titulo y artista.
-- Busqueda global por cancion, artista o album.
-- Barra inferior preparada para los controles del reproductor.
-- Apertura y reproducción de MP3, FLAC, WAV, OGG, M4A y AAC mediante VLC.
-- Pausa, detencion, pista anterior/siguiente, progreso y volumen.
-- Cola real con la pista actual, la siguiente y las pendientes.
-- Menu contextual **Anadir a la cola** sobre las listas de pistas.
-- Importacion SQLite de bibliotecas completas con cola reproducible.
-- El volumen se conserva entre ejecuciones.
-
-## Organizar e importar la biblioteca
-
-La jerarquia es fisica e inalterable. Organice la carpeta seleccionada asi:
+También puede hacer doble clic en:
 
 ```text
-Mi biblioteca/
-  Carlos Vives/
-    Clasicos/
-      01 - Cancion.mp3
-      02 - Otra cancion.flac
+Iniciar Vinqelo Player.bat
 ```
 
-`Carlos Vives` sera siempre el artista y `Clasicos` sera siempre el album,
-independientemente de lo que indiquen las etiquetas internas del archivo. Para
-compilaciones use, por ejemplo, `Mi biblioteca/Varios artistas/Romanticas 2026/`.
+En desarrollo, SQLite se guarda en `database/library.sqlite3` y los errores en
+`logs/vinqelo_player.log`.
 
-Si una carpeta de artista contiene pistas directamente, Vinqelo las conserva en
-un album virtual llamado `Pistas sueltas`. Las carpetas con nombres de coleccion
-como `Vallenatos Sueltos Spotify`, `Salsa nueva`, `Merengues`, `Gaitas`,
-`Champetas`, `Playlist` o `Mix` aparecen directamente en **Compilaciones** como
-`Varios artistas` y mantienen el artista individual de cada pista.
+## Versión portable para Windows
 
-En **Artistas** se muestran tarjetas circulares construidas como un collage de
-hasta cuatro portadas originales del propio artista. Vinqelo descarta resultados
-marcados como recopilatorios y guarda las portadas en cache. `Pistas sueltas`
-reutiliza ese mismo collage como caratula general. Al abrir un artista se muestran
-sus albumes con caratula y debajo la lista de pistas.
+El portable actual se encuentra en:
 
-Las portadas faltantes se buscan progresivamente al iniciar. La clave de cache
-depende del artista y del titulo exacto del album; por ello no se vuelve a bajar
-una imagen sin cambios. Nombres organizativos como
-`Luis Miguel - 2001 - Mis Romances` se conservan en la biblioteca, pero se limpian
-temporalmente a `Mis Romances` para localizar su lanzamiento original.
+```text
+dist/Vinqelo Player Portable.exe
+```
 
-Al reproducir una pista desde un album o carpeta se carga la lista completa y se
-comienza en la pista elegida. **Reproduccion en curso** vuelve al artista, album y
-pista actual aunque la reproduccion haya avanzado automaticamente.
+Incluye Python, PySide6, Mutagen y VLC, por lo que no requiere instalaciones
+adicionales. Al iniciarlo crea junto al ejecutable:
 
-La portada de **Biblioteca** funciona como panel de actividad: muestra artistas y
-canciones mas escuchados con sus collages o caratulas. Una escucha se registra
-solamente despues de 30 segundos reales de reproduccion; el tiempo en pausa no
-cuenta. Los rankings muestran un artista o una cancion al alcanzar tres escuchas
-validas y se ordenan por el tiempo total acumulado, no por la cantidad de inicios.
-El resaltado avanza a la pista siguiente junto con VLC.
+```text
+Vinqelo Player Portable.exe
+Vinqelo Player Data/
+  library.sqlite3
+  cover_cache/
+  logs/
+```
 
-Con clic derecho sobre un artista, album o compilacion se puede buscar una imagen
-en internet y elegirla entre varias miniaturas en una ventana emergente. Las fotos
-de artistas y las caratulas manuales provienen del catalogo musical de Deezer. La
-busqueda automatica de respaldo conserva MusicBrainz/Cover Art Archive. La imagen
-elegida queda fija y no es reemplazada automaticamente.
+Para conservar biblioteca, listas, carátulas e historial al trasladarlo, copie
+juntos el `.exe` y `Vinqelo Player Data`. Los archivos musicales no se copian:
+deben seguir disponibles en la otra PC. Mantener las mismas rutas o la misma
+letra del disco externo evita tener que importar la colección nuevamente.
 
-**Smart Playlist** crea listas dinámicas usando el tiempo escuchado: una lista
-global mezclada, una lista de canciones agregadas durante los ultimos 30 dias y
-una lista individual por cada artista. Todas se reordenan automaticamente y se
-pueden reproducir completas desde cualquier pista.
+Windows SmartScreen puede advertir sobre el ejecutable porque esta compilación
+no está firmada con un certificado comercial.
 
-Pulse el icono de carpeta de la parte superior, seleccione `Mi biblioteca` y
-espere a que termine el analisis. Luego haga doble clic en una raiz, artista,
-album o pista para reproducir su cola completa.
+## Manejo de errores
 
-## Reproducir un archivo
+- Validación de carpetas inexistentes.
+- Archivos dañados o metadatos faltantes no detienen el resto de la importación.
+- Mensajes claros cuando VLC no puede reproducir un archivo.
+- Registro técnico en `logs/vinqelo_player.log` o en la carpeta de datos portable.
+- Rutas completas únicas en SQLite para evitar canciones duplicadas.
 
-1. Ejecute `python main.py`.
-2. Pulse el icono de archivo en la parte superior de Biblioteca.
-3. Seleccione un archivo de audio compatible.
-4. Use los controles inferiores para pausar, detener, avanzar o retroceder.
+## Fuera del alcance actual
+
+Todavía no se incluyen:
+
+- Android.
+- Sincronización entre equipos.
+- Streaming o vídeo.
+- Conversión automática a OGG.
+- Búsqueda o descarga de archivos musicales.
+- Firma comercial del ejecutable portable.
+
+## Pruebas
+
+La suite automatizada se ejecuta con:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Actualmente cubre base de datos, escaneo de bibliotecas, formatos, reproducción,
+carátulas, búsqueda, metadatos, historial y listas de reproducción.
