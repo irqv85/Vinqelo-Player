@@ -22,9 +22,9 @@ def _runtime_root() -> Path:
         return Path(custom_root).expanduser().resolve()
 
     if _is_frozen():
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        base = Path(local_app_data) if local_app_data else Path.home() / "AppData" / "Local"
-        return base / APP_NAME
+        # La edición empaquetada es portable: conserva biblioteca, carátulas y
+        # logs junto al ejecutable, sin escribir dentro del paquete temporal.
+        return Path(sys.executable).resolve().parent / f"{APP_NAME} Data"
 
     return PROJECT_ROOT
 

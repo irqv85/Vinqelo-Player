@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import sys
 from dataclasses import replace
 from enum import Enum
 from pathlib import Path
@@ -48,6 +50,12 @@ class PlayerController(QObject):
         self._ended_handled = False
 
         try:
+            if getattr(sys, "frozen", False):
+                bundle_root = Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent))
+                os.environ["VLC_PLUGIN_PATH"] = str(bundle_root / "plugins")
+                add_dll_directory = getattr(os, "add_dll_directory", None)
+                if callable(add_dll_directory):
+                    self._vlc_dll_directory = add_dll_directory(str(bundle_root))
             import vlc
 
             self._vlc = vlc
@@ -376,6 +384,9 @@ class PlayerController(QObject):
             if callable(release_equalizer):
                 release_equalizer()
             self._instance.release()
+            dll_directory = getattr(self, "_vlc_dll_directory", None)
+            if dll_directory is not None:
+                dll_directory.close()
         except Exception:
             self._logger.exception("No se pudo liberar completamente el motor VLC")
 
