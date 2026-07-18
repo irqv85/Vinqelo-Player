@@ -12,6 +12,7 @@ from ui.icons import NAV_ICON_SIZE, navigation_icon
 
 class Sidebar(QFrame):
     section_selected = Signal(str)
+    about_requested = Signal()
 
     LIBRARY_SECTIONS = (
         ("library", "Biblioteca", "library"),
@@ -78,13 +79,16 @@ class Sidebar(QFrame):
         self._add_group(layout, "REPRODUCCIÓN", self.PLAYBACK_SECTIONS)
 
         layout.addStretch(1)
-        self.engine_label = QLabel("●  Motor local listo")
-        self.engine_label.setObjectName("engineReady")
+        about_button = QPushButton("Acerca de")
+        about_button.setObjectName("aboutButton")
+        about_button.setIcon(navigation_icon("info"))
+        about_button.setIconSize(NAV_ICON_SIZE)
+        about_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        about_button.clicked.connect(self.about_requested.emit)
+        layout.addWidget(about_button)
         version_label = QLabel(f"Vinqelo Player  ·  {APP_VERSION}")
         version_label.setObjectName("mutedLabel")
         version_label.setStyleSheet("font-size: 10px;")
-        layout.addWidget(self.engine_label)
-        layout.addSpacing(2)
         layout.addWidget(version_label)
 
         self.select("library", emit_signal=False)
@@ -111,14 +115,8 @@ class Sidebar(QFrame):
             self._icon_kinds[key] = icon_kind
 
     def set_player_available(self, available: bool) -> None:
-        if available:
-            self.engine_label.setText("●  Motor VLC listo")
-            self.engine_label.setObjectName("engineReady")
-        else:
-            self.engine_label.setText("●  VLC no disponible")
-            self.engine_label.setObjectName("engineUnavailable")
-        self.engine_label.style().unpolish(self.engine_label)
-        self.engine_label.style().polish(self.engine_label)
+        # El estado técnico del motor no se muestra en la navegación lateral.
+        _ = available
 
     def set_now_playing_available(self, available: bool) -> None:
         button = self._buttons.get("now_playing")

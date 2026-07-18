@@ -93,5 +93,62 @@ class LibraryScannerTests(unittest.TestCase):
             self.assertEqual(saved_track["album_title"], "Clásicos")
 
 
+    def test_sync_recognizes_moves_and_removes_deleted_tracks(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            base = Path(temporary_directory)
+            root = base / "Music"
+            original = root / "Aventura" / "Album uno" / "01 tema.mp3"
+            original.parent.mkdir(parents=True)
+            original.write_bytes(b"audio de prueba estable" * 100)
+            fake_details = SimpleNamespace(
+                title="Tema", artist="Etiqueta", track_number="1", year="",
+                duration_seconds=180.0, file_format="MP3",
+            )
+            database = DatabaseManager(base / "library.sqlite3")
+            database.initialize()
+            with patch("library.scanner.read_track_details", return_value=fake_details):
+                database.import_library_scan(scan_library(root))
+            original_path = str(original.resolve())
+            original_row = database.get_track_by_path(original_path)
+            original_id = int(original_row["id"])
+            for _ in range(3):
+                database.record_qualified_listen(original_path, 60)
+            playlist_id = database.create_playlist("Favoritas")
+            database.add_track_to_playlist(playlist_id, original_path)
+
+            with patch(
+                "library.scanner.read_track_details",
+                side_effect=ValueError("metadatos dañados"),
+            ):
+                damaged_scan = scan_library(root)
+            damaged_result = database.synchronize_library_scan(damaged_scan)
+            self.assertEqual(damaged_result["removed_tracks"], [])
+            self.assertIsNotNone(database.get_track_by_path(original_path))
+
+            moved = root / "Aventura" / "Album dos" / "Tema nuevo.mp3"
+            moved.parent.mkdir(parents=True)
+            original.rename(moved)
+            moved_path = str(moved.resolve())
+            with patch("library.scanner.read_track_details", return_value=fake_details):
+                result = database.synchronize_library_scan(scan_library(root))
+
+            self.assertEqual(result["moved_tracks"], {original_path: moved_path})
+            moved_row = database.get_track_by_path(moved_path)
+            self.assertEqual(int(moved_row["id"]), original_id)
+            self.assertEqual(int(moved_row["play_count"]), 3)
+            self.assertEqual(
+                database.get_playlist_tracks(playlist_id)[0]["file_path"], moved_path
+            )
+
+            moved.unlink()
+            with patch("library.scanner.read_track_details", return_value=fake_details):
+                deleted = database.synchronize_library_scan(scan_library(root))
+            self.assertEqual(deleted["removed_tracks"], [moved_path])
+            self.assertIsNone(database.get_track_by_path(moved_path))
+            self.assertEqual(database.get_playlist_tracks(playlist_id), [])
+            self.assertEqual(database.get_albums(), [])
+            self.assertEqual(database.get_artists(), [])
+
+
 if __name__ == "__main__":
     unittest.main()

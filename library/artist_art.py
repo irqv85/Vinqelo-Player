@@ -202,6 +202,13 @@ def collage_cache_files(artist: str) -> list[Path]:
     return sorted(folder.glob("*.img")) if folder.is_dir() else []
 
 
+def artist_thumbnail_path(artist: str) -> Path:
+    digest = hashlib.sha256(
+        ("artist-thumbnail-v1\0" + artist.casefold()).encode("utf-8")
+    ).hexdigest()
+    return COVER_CACHE_DIR / "artist_thumbnails" / f"{digest}.png"
+
+
 def _read_image(path: Path) -> bytes | None:
     try:
         data = path.read_bytes()

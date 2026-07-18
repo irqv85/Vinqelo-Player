@@ -270,19 +270,43 @@ class PlayerController(QObject):
         except Exception:
             self._logger.warning("No se pudieron refrescar los metadatos de %s", path, exc_info=True)
 
-    def replace_queue_paths(self, renamed: object) -> None:
-        if not isinstance(renamed, dict) or not renamed:
+    def replace_queue_paths(self, renamed: object, removed: object = None) -> None:
+        if not isinstance(renamed, dict):
             return
         normalized = {
             str(Path(old).resolve()): Path(new).resolve() for old, new in renamed.items()
         }
-        self._queue = [normalized.get(str(path), path) for path in self._queue]
+        removed_paths = {
+            str(Path(path).resolve())
+            for path in removed
+        } if isinstance(removed, (list, tuple, set)) else set()
+        current = self.current_file
+        current_key = str(current) if current is not None else ""
+        rebuilt: list[Path] = []
+        new_current_index = -1
+        for path in self._queue:
+            path_key = str(path)
+            replacement = normalized.get(path_key, path)
+            if path_key in removed_paths and path_key != current_key:
+                self._folder_metadata.pop(path_key, None)
+                continue
+            if path_key == current_key:
+                new_current_index = len(rebuilt)
+            rebuilt.append(replacement)
+        self._queue = rebuilt
+        if new_current_index >= 0:
+            self._current_index = new_current_index
+        elif self._queue:
+            self._current_index = min(self._current_index, len(self._queue) - 1)
+        else:
+            self._current_index = -1
         for old_path, new_path in normalized.items():
             metadata = self._folder_metadata.pop(old_path, None)
             if metadata is not None:
                 self._folder_metadata[str(new_path)] = metadata
         self._emit_queue_navigation()
-        self.refresh_current_metadata()
+        if current_key in normalized:
+            self.refresh_current_metadata()
 
     def previous(self) -> None:
         if self.current_file is None:

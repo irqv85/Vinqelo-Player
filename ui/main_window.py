@@ -3,20 +3,34 @@
 from __future__ import annotations
 
 import logging
+import sys
+import time
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QRectF, QSettings, QThread, QTimer, Qt
+from PySide6.QtCore import (
+    QEvent,
+    QRectF,
+    QSettings,
+    QSize,
+    Signal,
+    QThread,
+    QTimer,
+    Qt,
+)
 from PySide6.QtGui import (
     QCloseEvent,
     QIcon,
+    QKeySequence,
     QMouseEvent,
     QPainterPath,
     QRegion,
     QResizeEvent,
+    QShortcut,
 )
 from PySide6.QtWidgets import (
     QAbstractButton,
     QAbstractItemView,
+    QApplication,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -24,7 +38,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
-    QProgressDialog,
     QPushButton,
     QScrollBar,
     QSlider,
@@ -36,10 +49,17 @@ from PySide6.QtWidgets import (
 from config import ASSETS_DIR
 from database.manager import DatabaseManager
 from library.cover_art import CoverArtService
-from library.scanner import LibraryScanWorker
+from library.scanner import (
+    LibraryRootsSyncWorker,
+    LibraryScanWorker,
+)
 from library.track_metadata import TrackDetails
 from player.controller import PlayerController, PlayerUnavailableError
+from player.windows_media_session import WindowsMediaSession
 from ui.effects_dialog import EffectsDialog
+from ui.about_dialog import AboutDialog
+from ui.loading_banner import LoadingBanner
+from ui.icons import window_control_icon
 from ui.pages.album_page import AlbumGridPage
 from ui.pages.collection_pages import ArtistsPage, FoldersPage
 from ui.pages.library_page import LibraryPage
@@ -53,13 +73,16 @@ from ui.widgets.sidebar import Sidebar
 
 class MainWindow(QMainWindow):
     RESIZE_MARGIN = 7
+    media_action_requested = Signal(str)
 
     def __init__(self, database: DatabaseManager) -> None:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._database = database
         self._pages: dict[str, QWidget] = {}
+        self._dirty_sections: set[str] = set()
         self._player_controller: PlayerController | None = None
+        self._windows_media_session: WindowsMediaSession | None = None
         self._effects_dialog: EffectsDialog | None = None
         self._player_error_message = ""
         self._cover_art = CoverArtService(self)
@@ -71,16 +94,32 @@ class MainWindow(QMainWindow):
         self._resize_cursor = Qt.CursorShape.ArrowCursor
         self._scan_thread: QThread | None = None
         self._scan_worker: LibraryScanWorker | None = None
-        self._scan_progress: QProgressDialog | None = None
+        self._sync_thread: QThread | None = None
+        self._sync_worker: LibraryRootsSyncWorker | None = None
+        self._pending_sync_roots: set[str] = set()
+        self._sync_timer = QTimer(self)
+        self._sync_timer.setSingleShot(True)
+        self._sync_timer.setInterval(1400)
+        self._sync_timer.timeout.connect(self._start_library_sync)
         self._playback_context: dict[str, object] = {}
         self._listening_file = ""
         self._listened_seconds = 0
         self._persisted_listen_seconds = 0
         self._qualified_play_recorded = False
+        self._media_keyboard_hook: object | None = None
+        self._media_hook_callback: object | None = None
+        self._media_hotkey_ids: dict[int, str] = {}
+        self._media_shortcuts: list[QShortcut] = []
+        self._last_media_action: dict[str, float] = {}
         self._listening_timer = QTimer(self)
         self._listening_timer.setInterval(1000)
         self._listening_timer.timeout.connect(self._count_listening_second)
         self._listening_timer.start()
+        self.media_action_requested.connect(
+            self._run_media_action,
+            Qt.ConnectionType.QueuedConnection,
+        )
+        self._create_media_shortcuts()
 
         self.setWindowTitle("Vinqelo Player — Biblioteca")
         self.setWindowIcon(QIcon(str(ASSETS_DIR / "icons" / "vinqelo-v.png")))
@@ -126,6 +165,16 @@ class MainWindow(QMainWindow):
         self._add_page("smart_playlists", self.smart_playlists_page)
         self._add_page("playlists", self.playlists_page)
         self._add_page("queue", self.queue_page)
+        self._dirty_sections.update(
+            {
+                "artists",
+                "albums",
+                "compilations",
+                "folders",
+                "smart_playlists",
+                "playlists",
+            }
+        )
 
         content_layout.addWidget(self.sidebar)
         content_layout.addWidget(self.stack, 1)
@@ -133,11 +182,14 @@ class MainWindow(QMainWindow):
         root_layout.addWidget(content, 1)
         root_layout.addWidget(self.player_bar)
         self.setCentralWidget(root)
+        self._loading_banner = LoadingBanner(self)
 
         self._create_window_controls(root)
 
         self.sidebar.section_selected.connect(self.show_section)
+        self.sidebar.about_requested.connect(self._show_about)
         self.library_page.add_folder_requested.connect(self.select_folder)
+        self.library_page.update_library_requested.connect(self.update_library)
         self.library_page.open_file_requested.connect(self.open_audio_file)
         self.library_page.play_requested.connect(self._play_library_items)
         self.library_page.enqueue_requested.connect(self._enqueue_library_item)
@@ -181,10 +233,10 @@ class MainWindow(QMainWindow):
             self.compilations_page.update_artist_image
         )
         self._cover_art.cover_ready.connect(self.player_bar.set_cover_data)
+        self._cover_art.cover_ready.connect(self._handle_windows_cover)
         self._cover_art.cover_unavailable.connect(self.player_bar.set_cover_unavailable)
         self._cover_art.metadata_ready.connect(self._handle_online_metadata)
         self._initialize_player()
-        self._refresh_library_pages()
         self.show_section("library")
 
         root.installEventFilter(self)
@@ -192,6 +244,7 @@ class MainWindow(QMainWindow):
             child.installEventFilter(self)
             child.setMouseTracking(True)
         root.setMouseTracking(True)
+        QTimer.singleShot(0, self._initialize_system_media)
 
     def _create_window_controls(self, parent: QWidget) -> None:
         self.window_controls = QWidget(parent)
@@ -200,14 +253,18 @@ class MainWindow(QMainWindow):
         controls_layout.setContentsMargins(0, 0, 0, 0)
         controls_layout.setSpacing(3)
 
-        self.minimize_button = QPushButton("—")
-        self.maximize_button = QPushButton("□")
-        self.close_button = QPushButton("×")
+        self.minimize_button = QPushButton()
+        self.maximize_button = QPushButton()
+        self.close_button = QPushButton()
         for button in (self.minimize_button, self.maximize_button, self.close_button):
             button.setProperty("windowControl", True)
             button.setFixedSize(34, 28)
+            button.setIconSize(QSize(20, 20))
             controls_layout.addWidget(button)
         self.close_button.setProperty("closeControl", True)
+        self.minimize_button.setIcon(window_control_icon("minimize"))
+        self.maximize_button.setIcon(window_control_icon("maximize"))
+        self.close_button.setIcon(window_control_icon("close"))
 
         self.minimize_button.setToolTip("Minimizar")
         self.maximize_button.setToolTip("Maximizar")
@@ -256,11 +313,19 @@ class MainWindow(QMainWindow):
 
     def _handle_track_details(self, details: TrackDetails) -> None:
         self.player_bar.set_track_details(details)
+        if self._windows_media_session is not None:
+            self._windows_media_session.set_track_details(details)
         self._cover_art.request_cover(details)
 
     def _handle_online_metadata(self, file_path: str, details: TrackDetails) -> None:
         if str(details.file_path) == file_path:
             self.player_bar.set_track_details(details)
+            if self._windows_media_session is not None:
+                self._windows_media_session.set_track_details(details)
+
+    def _handle_windows_cover(self, file_path: str, data: bytes, _source: str) -> None:
+        if self._windows_media_session is not None:
+            self._windows_media_session.set_artwork(file_path, data)
 
     def _handle_library_album_cover(self, album_id: int, data: bytes) -> None:
         if self._playback_context.get("album_id") != album_id:
@@ -270,12 +335,15 @@ class MainWindow(QMainWindow):
             self.player_bar.set_cover_data(
                 file_path, data, "Carátula oficial de la biblioteca"
             )
+            if self._windows_media_session is not None:
+                self._windows_media_session.set_artwork(file_path, data)
 
     def _add_page(self, key: str, page: QWidget) -> None:
         self._pages[key] = page
         self.stack.addWidget(page)
 
     def _open_artist_from_dashboard(self, artist_id: int) -> None:
+        self._ensure_section_loaded("artists")
         self.stack.setCurrentWidget(self.artists_page)
         self.sidebar.select("artists", emit_signal=False)
         self.artists_page.open_artist(int(artist_id))
@@ -287,6 +355,7 @@ class MainWindow(QMainWindow):
             return
         page = self._pages.get(section)
         if page is not None:
+            self._ensure_section_loaded(section)
             show_root = getattr(page, "show_root", None)
             if callable(show_root):
                 show_root()
@@ -309,6 +378,36 @@ class MainWindow(QMainWindow):
             elif section == "library":
                 self.library_page.refresh_dashboard()
 
+    def update_library(self) -> None:
+        if self._scan_thread is not None or self._sync_thread is not None:
+            QMessageBox.information(
+                self,
+                "Actualización en curso",
+                "La biblioteca ya se está actualizando.",
+            )
+            return
+        registered = [Path(row["folder_path"]) for row in self._database.get_roots()]
+        available = [path.resolve() for path in registered if path.is_dir()]
+        unavailable = [path for path in registered if not path.is_dir()]
+        for path in unavailable:
+            self._logger.warning("Raíz de biblioteca no disponible: %s", path)
+        if not registered:
+            QMessageBox.information(
+                self,
+                "Biblioteca vacía",
+                "Primero agrega una carpeta raíz a la biblioteca.",
+            )
+            return
+        if not available:
+            QMessageBox.warning(
+                self,
+                "Biblioteca no disponible",
+                "No se encontró ninguna de las carpetas registradas.",
+            )
+            return
+        self._pending_sync_roots.update(str(path) for path in available)
+        self._start_library_sync()
+
     def select_folder(self) -> None:
         selected = QFileDialog.getExistingDirectory(
             self,
@@ -328,13 +427,13 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Importación en curso", "Ya se está analizando una carpeta.")
             return
 
-        self._scan_progress = QProgressDialog(
-            "Analizando Artista / Álbum / Pista…", "", 0, 0, self
+        self._loading_banner.start(
+            [
+                "Validando cambios en la biblioteca…",
+                "Actualizando la colección…",
+                "Organizando los cambios detectados…",
+            ]
         )
-        self._scan_progress.setWindowTitle("Agregar biblioteca")
-        self._scan_progress.setCancelButton(None)
-        self._scan_progress.setMinimumDuration(0)
-        self._scan_progress.show()
 
         self._scan_thread = QThread(self)
         self._scan_worker = LibraryScanWorker(folder_path)
@@ -352,7 +451,13 @@ class MainWindow(QMainWindow):
         self._logger.info("Analizando biblioteca: %s", folder_path)
 
     def _finish_library_import(self, scan: object) -> None:
-        if not scan.artists:
+        registered_roots = {
+            str(Path(row["folder_path"]).resolve())
+            for row in self._database.get_roots()
+        }
+        existing_root = str(Path(scan.root_path).resolve()) in registered_roots
+        if not scan.artists and not existing_root:
+            self._loading_banner.stop()
             QMessageBox.warning(
                 self,
                 "No se encontraron álbumes",
@@ -362,10 +467,15 @@ class MainWindow(QMainWindow):
             )
             return
         try:
-            counts = self._database.import_library_scan(scan)
+            counts = self._database.synchronize_library_scan(scan)
+            prepared = self.artists_page.prepare_artist_thumbnails(force=True)
+            self.artists_page.queue_artwork_updates()
+            self._logger.info("Miniaturas de artistas preparadas: %d", prepared)
+            self._apply_sync_to_player(counts)
             self._refresh_library_pages()
             stats = self._database.get_library_stats()
             warning = f"\n\n{len(scan.warnings)} archivo(s) no pudieron leerse." if scan.warnings else ""
+            self._loading_banner.stop()
             QMessageBox.information(
                 self,
                 "Biblioteca agregada",
@@ -375,31 +485,139 @@ class MainWindow(QMainWindow):
                 "Haz doble clic en una carpeta, artista, álbum o pista para reproducir.",
             )
         except Exception as exc:
+            self._loading_banner.stop()
             self._logger.exception("No se pudo guardar la biblioteca")
             QMessageBox.critical(self, "No se pudo importar", str(exc))
 
     def _fail_library_import(self, message: str) -> None:
+        self._loading_banner.stop()
         self._logger.error("Falló el escaneo de biblioteca: %s", message)
         QMessageBox.warning(self, "No se pudo analizar la carpeta", message)
 
     def _cleanup_scan(self) -> None:
-        if self._scan_progress is not None:
-            self._scan_progress.close()
-            self._scan_progress.deleteLater()
+        self._loading_banner.stop()
         if self._scan_thread is not None:
             self._scan_thread.deleteLater()
-        self._scan_progress = None
         self._scan_worker = None
         self._scan_thread = None
+        if self._pending_sync_roots:
+            self._sync_timer.start()
+
+    def _start_library_sync(self) -> None:
+        if self._sync_thread is not None or self._scan_thread is not None:
+            self._sync_timer.start(1800)
+            return
+        roots = [
+            Path(path) for path in sorted(self._pending_sync_roots)
+            if Path(path).is_dir()
+        ]
+        self._pending_sync_roots.clear()
+        if not roots:
+            return
+        self._sync_thread = QThread(self)
+        self._sync_worker = LibraryRootsSyncWorker(roots)
+        self._sync_worker.moveToThread(self._sync_thread)
+        self._sync_thread.started.connect(self._sync_worker.run)
+        self._sync_worker.finished.connect(self._finish_library_sync)
+        self._sync_worker.finished.connect(self._sync_worker.deleteLater)
+        self._sync_worker.finished.connect(self._sync_thread.quit)
+        self._sync_thread.finished.connect(self._cleanup_library_sync)
+        self._loading_banner.start(
+            [
+                "Validando cambios en la biblioteca…",
+                "Actualizando la colección…",
+                "Organizando los cambios detectados…",
+            ]
+        )
+        self._sync_thread.start()
+        self._logger.info("Sincronizando %d raíz(es) de biblioteca", len(roots))
+
+    def _finish_library_sync(self, scans: object, errors: object) -> None:
+        moved: dict[str, str] = {}
+        removed: list[str] = []
+        try:
+            for scan in scans if isinstance(scans, list) else []:
+                result = self._database.synchronize_library_scan(scan)
+                moved.update(result.get("moved_tracks", {}))
+                removed.extend(result.get("removed_tracks", []))
+            prepared = self.artists_page.prepare_artist_thumbnails(force=True)
+            self.artists_page.queue_artwork_updates()
+            self._logger.info("Miniaturas de artistas preparadas: %d", prepared)
+            if scans:
+                self._apply_sync_to_player(
+                    {"moved_tracks": moved, "removed_tracks": removed}
+                )
+                self._refresh_library_pages()
+            for error in errors if isinstance(errors, list) else []:
+                self._logger.warning("Sincronización omitida: %s", error)
+            self._logger.info(
+                "Biblioteca sincronizada: %d movida(s), %d eliminada(s)",
+                len(moved),
+                len(removed),
+            )
+        except Exception:
+            self._logger.exception("No se pudo sincronizar la biblioteca")
+
+    def _apply_sync_to_player(self, result: object) -> None:
+        if self._player_controller is None or not isinstance(result, dict):
+            return
+        moved = result.get("moved_tracks", {})
+        removed = result.get("removed_tracks", [])
+        if isinstance(moved, dict):
+            if self._listening_file in moved:
+                self._listening_file = str(moved[self._listening_file])
+                self._playback_context["file_path"] = self._listening_file
+            self._player_controller.replace_queue_paths(moved, removed)
+
+    def _cleanup_library_sync(self) -> None:
+        self._loading_banner.stop()
+        if self._sync_thread is not None:
+            self._sync_thread.deleteLater()
+        self._sync_worker = None
+        self._sync_thread = None
+        if self._pending_sync_roots:
+            self._sync_timer.start()
 
     def _refresh_library_pages(self) -> None:
         self.library_page.refresh_stats()
-        self.artists_page.refresh()
-        self.albums_page.refresh()
-        self.compilations_page.refresh()
-        self.folders_page.refresh()
-        self.smart_playlists_page.refresh()
-        self.playlists_page.refresh()
+        self._dirty_sections.update(
+            {
+                "artists",
+                "albums",
+                "compilations",
+                "folders",
+                "smart_playlists",
+                "playlists",
+            }
+        )
+        current = next(
+            (
+                key for key, page in self._pages.items()
+                if page is self.stack.currentWidget()
+            ),
+            "",
+        )
+        self._ensure_section_loaded(current)
+
+    def _ensure_section_loaded(self, section: str) -> None:
+        if section not in self._dirty_sections:
+            return
+        page = self._pages.get(section)
+        refresh = getattr(page, "refresh", None)
+        if callable(refresh):
+            self._loading_banner.start(
+                [
+                    "Preparando la colección…",
+                    "Organizando la información…",
+                    "Casi listo…",
+                ]
+            )
+            QApplication.processEvents()
+            try:
+                refresh()
+            finally:
+                self._loading_banner.stop()
+        self._dirty_sections.discard(section)
 
     def _show_effects(self) -> None:
         if self._effects_dialog is None:
@@ -562,6 +780,7 @@ class MainWindow(QMainWindow):
         album_id = self._playback_context.get("album_id")
         file_path = str(self._playback_context.get("file_path", ""))
         if self._playback_context.get("is_compilation"):
+            self._ensure_section_loaded("compilations")
             self.stack.setCurrentWidget(self.compilations_page)
             self.compilations_page.locate(
                 int(album_id) if album_id is not None else None, file_path
@@ -570,6 +789,7 @@ class MainWindow(QMainWindow):
             artist_id = self._playback_context.get("artist_id")
             if artist_id is None:
                 return
+            self._ensure_section_loaded("artists")
             self.stack.setCurrentWidget(self.artists_page)
             self.artists_page.locate(
                 int(artist_id),
@@ -612,13 +832,218 @@ class MainWindow(QMainWindow):
         self._logger.error("Error de reproducción: %s", message)
         QMessageBox.warning(self, "No se pudo reproducir", message)
 
+    def _show_about(self) -> None:
+        AboutDialog(self).exec()
+
     def _toggle_maximized(self) -> None:
         if self.isMaximized():
             self.showNormal()
-            self.maximize_button.setText("□")
+            self.maximize_button.setIcon(window_control_icon("maximize"))
         else:
             self.showMaximized()
-            self.maximize_button.setText("❐")
+            self.maximize_button.setIcon(window_control_icon("restore"))
+
+    def _initialize_system_media(self) -> None:
+        """Prefiere la sesión multimedia oficial de Windows sobre hotkeys globales."""
+        controller = self._player_controller
+        if controller is None:
+            return
+        session = WindowsMediaSession(int(self.winId()), self)
+        if not session.is_available:
+            session.deleteLater()
+            self._logger.info("Se usará el respaldo de teclas multimedia clásicas")
+            self._register_media_hotkeys()
+            return
+
+        self._windows_media_session = session
+        for shortcut in self._media_shortcuts:
+            shortcut.setEnabled(False)
+        session.action_requested.connect(
+            self._queue_media_action,
+            Qt.ConnectionType.QueuedConnection,
+        )
+        controller.state_changed.connect(session.set_playback_state)
+        controller.position_changed.connect(session.update_timeline)
+        controller.queue_navigation_changed.connect(session.set_navigation)
+
+    def _register_media_hotkeys(self) -> None:
+        """Escucha globalmente solo las teclas multimedia dedicadas en Windows."""
+        if sys.platform != "win32" or self._player_controller is None:
+            return
+        try:
+            import ctypes
+            import ctypes.wintypes
+
+            user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
+
+            class KeyboardData(ctypes.Structure):
+                _fields_ = [
+                    ("vkCode", ctypes.wintypes.DWORD),
+                    ("scanCode", ctypes.wintypes.DWORD),
+                    ("flags", ctypes.wintypes.DWORD),
+                    ("time", ctypes.wintypes.DWORD),
+                    ("extraInfo", ctypes.c_size_t),
+                ]
+
+            result_type = ctypes.c_ssize_t
+            hook_proc_type = ctypes.WINFUNCTYPE(
+                result_type,
+                ctypes.c_int,
+                ctypes.wintypes.WPARAM,
+                ctypes.wintypes.LPARAM,
+            )
+            user32.SetWindowsHookExW.argtypes = [
+                ctypes.c_int,
+                hook_proc_type,
+                ctypes.wintypes.HINSTANCE,
+                ctypes.wintypes.DWORD,
+            ]
+            user32.CallNextHookEx.restype = result_type
+            user32.CallNextHookEx.argtypes = [
+                ctypes.wintypes.HHOOK,
+                ctypes.c_int,
+                ctypes.wintypes.WPARAM,
+                ctypes.wintypes.LPARAM,
+            ]
+            user32.SetWindowsHookExW.restype = ctypes.wintypes.HHOOK
+            kernel32.GetModuleHandleW.argtypes = [ctypes.wintypes.LPCWSTR]
+            kernel32.GetModuleHandleW.restype = ctypes.wintypes.HMODULE
+            media_keys = {
+                0xB1: "previous",    # VK_MEDIA_PREV_TRACK
+                0xB3: "play_pause",  # VK_MEDIA_PLAY_PAUSE
+                0xB0: "next",        # VK_MEDIA_NEXT_TRACK
+                0xB2: "stop",        # VK_MEDIA_STOP
+            }
+
+            def media_key_hook(code: int, message: int, data_pointer: int) -> int:
+                if code >= 0 and int(message) in (0x0100, 0x0104):  # KEYDOWN / SYSKEYDOWN
+                    keyboard = ctypes.cast(
+                        data_pointer, ctypes.POINTER(KeyboardData)
+                    ).contents
+                    action = media_keys.get(int(keyboard.vkCode))
+                    if action:
+                        self._queue_media_action(action)
+                return user32.CallNextHookEx(
+                    self._media_keyboard_hook, code, message, data_pointer
+                )
+
+            self._media_hook_callback = hook_proc_type(media_key_hook)
+            module = kernel32.GetModuleHandleW(None)
+            self._media_keyboard_hook = user32.SetWindowsHookExW(
+                13,  # WH_KEYBOARD_LL
+                self._media_hook_callback,
+                module,
+                0,
+            )
+            if not self._media_keyboard_hook:
+                self._media_hook_callback = None
+                raise ctypes.WinError()
+
+            window_handle = int(self.winId())
+            global_keys = {
+                0xA101: (0xB1, "previous"),
+                0xA102: (0xB3, "play_pause"),
+                0xA103: (0xB0, "next"),
+                0xA104: (0xB2, "stop"),
+            }
+            for hotkey_id, (virtual_key, action) in global_keys.items():
+                if user32.RegisterHotKey(window_handle, hotkey_id, 0x4000, virtual_key):
+                    self._media_hotkey_ids[hotkey_id] = action
+            self._logger.info(
+                "Teclas multimedia activadas: hook global y %s hotkeys",
+                len(self._media_hotkey_ids),
+            )
+        except Exception:
+            self._logger.exception("No se pudieron registrar las teclas multimedia")
+
+    def _unregister_media_hotkeys(self) -> None:
+        if sys.platform != "win32":
+            return
+        try:
+            import ctypes
+
+            user32 = ctypes.windll.user32
+            window_handle = int(self.winId())
+            for hotkey_id in tuple(self._media_hotkey_ids):
+                user32.UnregisterHotKey(window_handle, hotkey_id)
+            if self._media_keyboard_hook:
+                user32.UnhookWindowsHookEx(self._media_keyboard_hook)
+        finally:
+            self._media_hotkey_ids.clear()
+            self._media_keyboard_hook = None
+            self._media_hook_callback = None
+
+    def _create_media_shortcuts(self) -> None:
+        """Respaldo local: solamente teclas multimedia, nunca letras o Ctrl."""
+        keys = {
+            Qt.Key.Key_MediaPrevious: "previous",
+            Qt.Key.Key_MediaTogglePlayPause: "play_pause",
+            Qt.Key.Key_MediaNext: "next",
+            Qt.Key.Key_MediaStop: "stop",
+        }
+        for key, action in keys.items():
+            shortcut = QShortcut(QKeySequence(key), self)
+            shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+            shortcut.activated.connect(
+                lambda selected=action: self._queue_media_action(selected)
+            )
+            self._media_shortcuts.append(shortcut)
+
+    def _queue_media_action(self, action: str) -> None:
+        """Une las rutas de Windows y evita dobles acciones por una pulsación."""
+        now = time.monotonic()
+        if now - self._last_media_action.get(action, 0.0) < 0.18:
+            return
+        self._last_media_action[action] = now
+        self.media_action_requested.emit(action)
+
+    def _run_media_action(self, action: str) -> None:
+        controller = self._player_controller
+        if controller is None:
+            return
+        actions = {
+            "previous": controller.previous,
+            "play": controller.play,
+            "pause": controller.pause,
+            "play_pause": controller.play_pause,
+            "next": controller.next,
+            "stop": controller.stop,
+        }
+        callback = actions.get(action)
+        if callback is not None:
+            self._logger.debug("Control multimedia: %s", action)
+            callback()
+
+    def nativeEvent(self, event_type: object, message: object) -> tuple[bool, int]:  # noqa: N802
+        """Atiende WM_HOTKEY y teclados que envían WM_APPCOMMAND."""
+        if (
+            self._windows_media_session is not None
+            and self._windows_media_session.is_available
+        ):
+            return super().nativeEvent(event_type, message)
+        if sys.platform == "win32":
+            try:
+                import ctypes.wintypes
+
+                native_message = ctypes.wintypes.MSG.from_address(int(message))
+                action = None
+                if native_message.message == 0x0312:  # WM_HOTKEY
+                    action = self._media_hotkey_ids.get(int(native_message.wParam))
+                elif native_message.message == 0x0319:  # WM_APPCOMMAND
+                    command = (int(native_message.lParam) >> 16) & 0x7FF
+                    action = {
+                        11: "next",
+                        12: "previous",
+                        13: "stop",
+                        14: "play_pause",
+                    }.get(command)
+                if action:
+                    self._queue_media_action(action)
+                    return True, 0
+            except (TypeError, ValueError):
+                pass
+        return super().nativeEvent(event_type, message)
 
     def eventFilter(self, watched: object, event: QEvent) -> bool:  # noqa: N802 - Qt
         if isinstance(event, QMouseEvent):
@@ -709,6 +1134,8 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 - Qt
         super().resizeEvent(event)
+        if hasattr(self, "_loading_banner"):
+            self._loading_banner.center_banner()
         if hasattr(self, "window_controls"):
             self.window_controls.move(max(0, self.width() - 122), 7)
             self.window_controls.raise_()
@@ -724,12 +1151,14 @@ class MainWindow(QMainWindow):
             self.clearMask()
             return
         path = QPainterPath()
-        path.addRoundedRect(
-            QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5), 14, 14
-        )
+        path.addRect(QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5))
         self.setMask(QRegion(path.toFillPolygon().toPolygon()))
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - nombre definido por Qt
+        self._loading_banner.stop()
+        if self._windows_media_session is not None:
+            self._windows_media_session.shutdown()
+        self._unregister_media_hotkeys()
         self._flush_listening_time()
         self._settings.setValue("window/geometry", self.saveGeometry())
         if self._player_controller is not None:

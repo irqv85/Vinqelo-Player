@@ -19,20 +19,20 @@ QStackedWidget {
 
 QFrame#windowFrame {
     border: 1px solid #314766;
-    border-radius: 14px;
+    border-radius: 0;
 }
 
 QPushButton[windowControl="true"] {
-    background-color: rgba(18, 31, 51, 210);
-    border: 1px solid #2a3d59;
-    border-radius: 7px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 14px;
     color: #a9bad1;
     font-size: 14px;
 }
 
 QPushButton[windowControl="true"]:hover {
-    background-color: #213554;
-    color: #ffffff;
+    background-color: #1b2a43;
+    border-color: #30496d;
 }
 
 QPushButton[closeControl="true"]:hover {
@@ -106,16 +106,6 @@ QLabel#navGroup {
     padding: 12px 10px 4px 10px;
 }
 
-QLabel#engineReady {
-    color: #65d69e;
-    font-size: 11px;
-}
-
-QLabel#engineUnavailable {
-    color: #ff8e8e;
-    font-size: 11px;
-}
-
 QPushButton#navButton {
     background-color: transparent;
     border: none;
@@ -137,6 +127,31 @@ QPushButton#navButton[active="true"] {
     border-left: 3px solid #2583ff;
     color: #ffffff;
     font-weight: 600;
+}
+
+QPushButton#aboutButton {
+    background-color: transparent;
+    border: 1px solid transparent;
+    color: #8fa7c7;
+    min-height: 28px;
+    padding: 3px 7px;
+    text-align: left;
+}
+
+QPushButton#aboutButton:hover {
+    background-color: #14243d;
+    border-color: #2d4669;
+    color: #ffffff;
+}
+
+QPlainTextEdit#aboutLicenseText {
+    background-color: #0a1222;
+    border: 1px solid #304563;
+    border-radius: 0;
+    color: #e7edf7;
+    selection-background-color: #176fe5;
+    selection-color: #ffffff;
+    padding: 8px;
 }
 
 QLabel#pageEyebrow {

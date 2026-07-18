@@ -54,6 +54,19 @@ class DatabaseManager:
                        SELECT date_added FROM albums WHERE albums.id=tracks.album_id)
                        WHERE date_added IS NULL"""
                 )
+            if "file_size" not in track_columns:
+                connection.execute(
+                    "ALTER TABLE tracks ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0"
+                )
+            if "modified_ns" not in track_columns:
+                connection.execute(
+                    "ALTER TABLE tracks ADD COLUMN modified_ns INTEGER NOT NULL DEFAULT 0"
+                )
+            if "file_signature" not in track_columns:
+                connection.execute("ALTER TABLE tracks ADD COLUMN file_signature TEXT")
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_tracks_file_signature ON tracks(file_signature)"
+            )
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_albums_artist_id ON albums(artist_id)"
             )
@@ -87,9 +100,23 @@ class DatabaseManager:
         self._logger.info("Base de datos preparada en %s", self.database_path)
 
     def import_library_scan(self, scan: object) -> dict[str, int]:
+        result = self.synchronize_library_scan(scan)
+        return {
+            "artists": int(result["artists"]),
+            "albums": int(result["albums"]),
+            "tracks": int(result["tracks"]),
+        }
+
+    def synchronize_library_scan(self, scan: object) -> dict[str, object]:
         """Guarda un escaneo Root/Artist/Album/Track en una sola transacción."""
         connection = self.connect()
-        counts = {"artists": 0, "albums": 0, "tracks": 0}
+        counts: dict[str, object] = {
+            "artists": 0,
+            "albums": 0,
+            "tracks": 0,
+            "moved_tracks": {},
+            "removed_tracks": [],
+        }
         try:
             root_path = str(scan.root_path)
             connection.execute(
@@ -102,6 +129,21 @@ class DatabaseManager:
                     "SELECT id FROM library_roots WHERE folder_path = ?", (root_path,)
                 ).fetchone()["id"]
             )
+            previous_tracks = list(
+                connection.execute(
+                    """SELECT t.* FROM tracks t
+                       JOIN albums al ON al.id=t.album_id
+                       JOIN artists ar ON ar.id=al.artist_id WHERE ar.root_id=?""",
+                    (root_id,),
+                ).fetchall()
+            )
+            previous_by_path = {row["file_path"]: row for row in previous_tracks}
+            previous_by_signature: dict[str, list[sqlite3.Row]] = {}
+            for row in previous_tracks:
+                if row["file_signature"]:
+                    previous_by_signature.setdefault(row["file_signature"], []).append(row)
+            claimed_track_ids: set[int] = set()
+            discovered_paths = set(getattr(scan, "discovered_paths", set()))
             for artist in scan.artists:
                 connection.execute(
                     "INSERT INTO artists(root_id, name, folder_path) VALUES (?, ?, ?) "
@@ -113,7 +155,7 @@ class DatabaseManager:
                         "SELECT id FROM artists WHERE folder_path = ?", (str(artist.folder_path),)
                     ).fetchone()["id"]
                 )
-                counts["artists"] += 1
+                counts["artists"] = int(counts["artists"]) + 1
                 for album in artist.albums:
                     connection.execute(
                         """INSERT INTO albums
@@ -138,27 +180,91 @@ class DatabaseManager:
                             "SELECT id FROM albums WHERE folder_path = ?", (str(album.folder_path),)
                         ).fetchone()["id"]
                     )
-                    counts["albums"] += 1
+                    counts["albums"] = int(counts["albums"]) + 1
                     for track in album.tracks:
-                        connection.execute(
-                            """INSERT INTO tracks
-                               (album_id, title, track_artist, track_number, file_path, duration, file_format)
-                               VALUES (?, ?, ?, ?, ?, ?, ?)
-                               ON CONFLICT(file_path) DO UPDATE SET
-                                 album_id=excluded.album_id, title=excluded.title,
-                                 track_artist=excluded.track_artist, track_number=excluded.track_number,
-                                 duration=excluded.duration, file_format=excluded.file_format""",
-                            (
-                                album_id,
-                                track.title,
-                                track.track_artist,
-                                track.track_number,
-                                str(track.file_path),
-                                track.duration,
-                                track.file_format,
-                            ),
+                        new_path = str(track.file_path)
+                        existing = previous_by_path.get(new_path)
+                        if existing is None and track.file_signature:
+                            matches = [
+                                row for row in previous_by_signature.get(
+                                    track.file_signature, []
+                                )
+                                if int(row["id"]) not in claimed_track_ids
+                            ]
+                            if len(matches) == 1:
+                                existing = matches[0]
+                        if existing is None:
+                            fallback = [
+                                row for row in previous_tracks
+                                if int(row["id"]) not in claimed_track_ids
+                                and row["file_path"] not in discovered_paths
+                                and row["title"].casefold() == track.title.casefold()
+                                and row["file_format"].casefold()
+                                == track.file_format.casefold()
+                                and abs(
+                                    float(row["duration"] or 0)
+                                    - float(track.duration or 0)
+                                ) < 2
+                            ]
+                            if len(fallback) == 1:
+                                existing = fallback[0]
+                        values = (
+                            album_id,
+                            track.title,
+                            track.track_artist,
+                            track.track_number,
+                            new_path,
+                            track.duration,
+                            track.file_format,
+                            track.file_size,
+                            track.modified_ns,
+                            track.file_signature,
                         )
-                        counts["tracks"] += 1
+                        if existing is None:
+                            cursor = connection.execute(
+                                """INSERT INTO tracks
+                                   (album_id,title,track_artist,track_number,file_path,
+                                    duration,file_format,file_size,modified_ns,file_signature)
+                                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                                values,
+                            )
+                            claimed_track_ids.add(int(cursor.lastrowid))
+                        else:
+                            track_id = int(existing["id"])
+                            claimed_track_ids.add(track_id)
+                            if existing["file_path"] != new_path:
+                                counts["moved_tracks"][existing["file_path"]] = new_path
+                            connection.execute(
+                                """UPDATE tracks SET album_id=?,title=?,track_artist=?,
+                                   track_number=?,file_path=?,duration=?,file_format=?,
+                                   file_size=?,modified_ns=?,file_signature=? WHERE id=?""",
+                                (*values, track_id),
+                            )
+                        counts["tracks"] = int(counts["tracks"]) + 1
+            stale_tracks = [
+                row for row in previous_tracks
+                if int(row["id"]) not in claimed_track_ids
+                and row["file_path"] not in discovered_paths
+            ]
+            if stale_tracks:
+                stale_ids = [int(row["id"]) for row in stale_tracks]
+                placeholders = ",".join("?" for _ in stale_ids)
+                connection.execute(
+                    f"DELETE FROM tracks WHERE id IN ({placeholders})", stale_ids
+                )
+                counts["removed_tracks"] = [row["file_path"] for row in stale_tracks]
+            connection.execute(
+                """DELETE FROM albums WHERE id IN (
+                   SELECT al.id FROM albums al JOIN artists ar ON ar.id=al.artist_id
+                   WHERE ar.root_id=? AND NOT EXISTS (
+                       SELECT 1 FROM tracks t WHERE t.album_id=al.id))""",
+                (root_id,),
+            )
+            connection.execute(
+                """DELETE FROM artists WHERE root_id=? AND NOT EXISTS (
+                   SELECT 1 FROM albums al WHERE al.artist_id=artists.id)""",
+                (root_id,),
+            )
             connection.commit()
         except Exception:
             connection.rollback()

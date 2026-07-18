@@ -43,6 +43,7 @@ class LibraryPage(QWidget):
     enqueue_requested = Signal(object)
     playlist_requested = Signal(object)
     artist_requested = Signal(int)
+    update_library_requested = Signal()
 
     def __init__(self, database: DatabaseManager) -> None:
         super().__init__()
@@ -74,6 +75,12 @@ class LibraryPage(QWidget):
         open_button.setToolTip("Abrir un archivo")
         open_button.setFixedSize(36, 36)
         open_button.clicked.connect(self.open_file_requested.emit)
+        update_button = QPushButton()
+        update_button.setObjectName("toolbarIcon")
+        update_button.setIcon(navigation_icon("refresh", "#dce7f7"))
+        update_button.setToolTip("Actualizar biblioteca")
+        update_button.setFixedSize(36, 36)
+        update_button.clicked.connect(self.update_library_requested.emit)
         add_button = QPushButton()
         add_button.setObjectName("toolbarIconPrimary")
         add_button.setIcon(navigation_icon("folder_add", "#ffffff"))
@@ -81,6 +88,7 @@ class LibraryPage(QWidget):
         add_button.setFixedSize(36, 36)
         add_button.clicked.connect(self.add_folder_requested.emit)
         actions.addWidget(open_button)
+        actions.addWidget(update_button)
         actions.addWidget(add_button)
         header.addLayout(text_box, 1)
         header.addLayout(actions)
@@ -240,19 +248,6 @@ class LibraryPage(QWidget):
 
     @staticmethod
     def _track_cover(row: object, artist: str) -> QPixmap:
-        manual_data = read_image(manual_artist_image_path(artist))
-        manual = QPixmap()
-        if manual_data:
-            manual.loadFromData(manual_data)
-        if not manual.isNull():
-            return manual
-        if row["album_title"] == "Pistas sueltas":
-            covers = [
-                QPixmap(str(path)) for path in collage_cache_files(artist)[:4]
-            ]
-            covers = [pixmap for pixmap in covers if not pixmap.isNull()]
-            if covers:
-                return _collage_pixmap(covers, 48)
         candidates = [
             cover_cache_path(row["album_title"], artist),
             Path(row["cover_path"]) if row["cover_path"] else None,
@@ -262,6 +257,19 @@ class LibraryPage(QWidget):
                 pixmap = QPixmap(str(path))
                 if not pixmap.isNull():
                     return pixmap
+        if row["album_title"] == "Pistas sueltas":
+            covers = [
+                QPixmap(str(path)) for path in collage_cache_files(artist)[:4]
+            ]
+            covers = [pixmap for pixmap in covers if not pixmap.isNull()]
+            if covers:
+                return _collage_pixmap(covers, 48)
+        manual_data = read_image(manual_artist_image_path(artist))
+        manual = QPixmap()
+        if manual_data:
+            manual.loadFromData(manual_data)
+        if not manual.isNull():
+            return manual
         return _default_pixmap(48)
 
     def _play_top_track(self, item: QTreeWidgetItem, _column: int) -> None:

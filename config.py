@@ -9,6 +9,9 @@ from pathlib import Path
 
 APP_NAME = "Vinqelo Player"
 APP_VERSION = "0.7.0"
+APP_AUTHOR = "Irán Quintero"
+APP_AUTHOR_EMAIL = "iranquintero@gmail.com"
+APP_LICENSE = "GNU General Public License v3.0"
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 
@@ -31,6 +34,7 @@ def _runtime_root() -> Path:
 
 RUNTIME_ROOT = _runtime_root()
 ASSETS_DIR = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT)) / "assets"
+LICENSE_PATH = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT)) / "LICENSE"
 DATABASE_PATH = (
     RUNTIME_ROOT / "library.sqlite3"
     if _is_frozen() or os.environ.get("VINQELO_DATA_DIR")

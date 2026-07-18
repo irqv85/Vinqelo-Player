@@ -7,6 +7,12 @@ python-vlc>=3.0.20123,<4
 # Lectura de metadatos de audio
 mutagen>=1.47,<2
 
+# Integración nativa con el panel y las teclas multimedia de Windows 10/11
+winrt-runtime>=3.2.1,<4; platform_system == "Windows"
+winrt-Windows.Foundation>=3.2.1,<4; platform_system == "Windows"
+winrt-Windows.Media>=3.2.1,<4; platform_system == "Windows"
+winrt-Windows.Media.Interop>=3.2.1,<4; platform_system == "Windows"
+winrt-Windows.Storage.Streams>=3.2.1,<4; platform_system == "Windows"
+
 # Empaquetado futuro como .exe
 PyInstaller>=6.7,<7
-

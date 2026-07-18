@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -20,6 +21,9 @@ class ScannedTrack:
     file_path: Path
     duration: float
     file_format: str
+    file_size: int
+    modified_ns: int
+    file_signature: str
 
 
 @dataclass(slots=True)
@@ -44,6 +48,7 @@ class LibraryScan:
     root_path: Path
     artists: list[ScannedArtist] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    discovered_paths: set[str] = field(default_factory=set)
 
 
 COMPILATION_FOLDER_NAMES = {
@@ -71,6 +76,7 @@ def scan_library(root_path: Path) -> LibraryScan:
         loose_files = sorted(
             (p for p in artist_folder.iterdir() if is_supported_audio(p)), key=_natural_key
         )
+        result.discovered_paths.update(str(path.resolve()) for path in loose_files)
         if loose_files:
             loose_album = _scan_album_files(
                 title=artist_folder.name if compilation else "Pistas sueltas",
@@ -86,6 +92,7 @@ def scan_library(root_path: Path) -> LibraryScan:
             audio_files = sorted(
                 (p for p in album_folder.rglob("*") if is_supported_audio(p)), key=_natural_key
             )
+            result.discovered_paths.update(str(path.resolve()) for path in audio_files)
             if not audio_files:
                 continue
             album = _scan_album_files(
@@ -117,6 +124,7 @@ def _scan_album_files(
     for audio_path in audio_files:
         try:
             details = read_track_details(audio_path)
+            stat = audio_path.stat()
             number = _track_number(details.track_number, audio_path.stem)
             if album_year is None and details.year.isdigit():
                 album_year = int(details.year)
@@ -132,6 +140,9 @@ def _scan_album_files(
                     file_path=audio_path.resolve(),
                     duration=details.duration_seconds,
                     file_format=details.file_format,
+                    file_size=int(stat.st_size),
+                    modified_ns=int(stat.st_mtime_ns),
+                    file_signature=_file_signature(audio_path, int(stat.st_size)),
                 )
             )
         except Exception as exc:
@@ -173,6 +184,20 @@ def _natural_key(path: Path) -> list[object]:
     return [int(part) if part.isdigit() else part.casefold() for part in re.split(r"(\d+)", path.name)]
 
 
+def _file_signature(path: Path, size: int | None = None) -> str:
+    """Firma ligera para reconocer una pista aunque cambie de ruta o nombre."""
+    file_size = int(size if size is not None else path.stat().st_size)
+    digest = hashlib.sha1()
+    digest.update(str(file_size).encode("ascii"))
+    sample_size = 128 * 1024
+    with path.open("rb") as stream:
+        digest.update(stream.read(sample_size))
+        if file_size > sample_size:
+            stream.seek(max(0, file_size - sample_size))
+            digest.update(stream.read(sample_size))
+    return digest.hexdigest()
+
+
 class LibraryScanWorker(QObject):
     finished = Signal(object)
     failed = Signal(str)
@@ -187,3 +212,24 @@ class LibraryScanWorker(QObject):
             self.finished.emit(scan_library(self.root_path))
         except Exception as exc:
             self.failed.emit(str(exc))
+
+
+class LibraryRootsSyncWorker(QObject):
+    """Escanea varias raíces sin bloquear la interfaz principal."""
+
+    finished = Signal(object, object)
+
+    def __init__(self, root_paths: list[Path]) -> None:
+        super().__init__()
+        self.root_paths = root_paths
+
+    @Slot()
+    def run(self) -> None:
+        scans: list[LibraryScan] = []
+        errors: list[str] = []
+        for root_path in self.root_paths:
+            try:
+                scans.append(scan_library(root_path))
+            except Exception as exc:
+                errors.append(f"{root_path}: {exc}")
+        self.finished.emit(scans, errors)

@@ -297,13 +297,7 @@ class AlbumGridPage(QWidget):
         if item is None:
             return
         pixmap = QPixmap()
-        album = self._album_rows.get(album_id)
-        artist = (album["artist_name"] or album["album_artist"]) if album else ""
-        primary = _primary_artist_pixmap(artist)
-        if not primary.isNull():
-            pixmap = primary
-        else:
-            pixmap.loadFromData(data)
+        pixmap.loadFromData(data)
         if not pixmap.isNull():
             widget = self.grid.itemWidget(item)
             cover = widget.findChild(QLabel, "albumCardCover") if widget else None
@@ -322,7 +316,7 @@ class AlbumGridPage(QWidget):
             widget = self.grid.itemWidget(item) if item else None
             cover = widget.findChild(QLabel, "albumCardCover") if widget else None
             if cover:
-                cover.setPixmap(self._scaled_cover(pixmap))
+                cover.setPixmap(self._scaled_cover(_album_pixmap(album, album_artist)))
 
     def locate(self, album_id: int | None, file_path: str) -> bool:
         if album_id is None or album_id not in self._album_items:

@@ -29,7 +29,11 @@ from PySide6.QtWidgets import (
 
 from config import ASSETS_DIR
 from database.manager import DatabaseManager
-from library.artist_art import ArtistCollageService
+from library.artist_art import (
+    ArtistCollageService,
+    artist_thumbnail_path,
+    collage_cache_files,
+)
 from library.cover_art import cover_cache_path
 from library.manual_art import (
     manual_artist_image_path,
@@ -204,6 +208,15 @@ class ArtistsPage(QWidget):
         self._collage_service = ArtistCollageService(self)
         self._collage_service.cover_ready.connect(self._add_collage_cover)
         self._collage_service.album_cover_ready.connect(self._set_album_cover)
+        self._artwork_notify_timer = QTimer(self)
+        self._artwork_notify_timer.setSingleShot(True)
+        self._artwork_notify_timer.setInterval(250)
+        self._artwork_notify_timer.timeout.connect(self.artwork_changed.emit)
+        self._pending_thumbnail_artists: set[str] = set()
+        self._thumbnail_refresh_timer = QTimer(self)
+        self._thumbnail_refresh_timer.setSingleShot(True)
+        self._thumbnail_refresh_timer.setInterval(300)
+        self._thumbnail_refresh_timer.timeout.connect(self._flush_thumbnail_refresh)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 22, 28, 22)
@@ -311,12 +324,16 @@ class ArtistsPage(QWidget):
         self._collage_sources.clear()
         default = _default_pixmap(126)
         for artist in self.database.get_artists():
-            manual_data = read_image(manual_artist_image_path(artist["name"]))
-            manual_pixmap = QPixmap()
-            if manual_data:
-                manual_pixmap.loadFromData(manual_data)
-            source = manual_pixmap if not manual_pixmap.isNull() else default
-            item = QListWidgetItem(QIcon(_circle_pixmap(source, 126)), artist["name"])
+            thumbnail = QPixmap(str(artist_thumbnail_path(artist["name"])))
+            if thumbnail.isNull():
+                manual_data = read_image(manual_artist_image_path(artist["name"]))
+                manual_pixmap = QPixmap()
+                if manual_data:
+                    manual_pixmap.loadFromData(manual_data)
+                thumbnail = _circle_pixmap(
+                    manual_pixmap if not manual_pixmap.isNull() else default, 126
+                )
+            item = QListWidgetItem(QIcon(thumbnail), artist["name"])
             item.setTextAlignment(Qt.AlignmentFlag.AlignHCenter)
             item.setData(Qt.ItemDataRole.UserRole, int(artist["id"]))
             item.setData(Qt.ItemDataRole.UserRole + 1, artist["folder_path"])
@@ -328,6 +345,70 @@ class ArtistsPage(QWidget):
             self.artist_grid.addItem(item)
             self._artist_items[artist["name"]] = item
             self._collage_sources[artist["name"]] = []
+        self._filter_artists(self.artist_search.text())
+
+    def prepare_artist_thumbnails(
+        self, artist_names: set[str] | None = None, *, force: bool = True
+    ) -> int:
+        """Precalcula una miniatura por artista durante la actualización manual."""
+        albums_by_artist: dict[str, list[object]] = {}
+        for album in self.database.get_albums(None):
+            if album["is_compilation"]:
+                continue
+            name = str(album["artist_name"] or album["album_artist"])
+            albums_by_artist.setdefault(name, []).append(album)
+        prepared = 0
+        for artist in self.database.get_artists():
+            artist_name = str(artist["name"])
+            if artist_names is not None and artist_name not in artist_names:
+                continue
+            destination = artist_thumbnail_path(artist_name)
+            if destination.is_file() and not force:
+                continue
+            manual_data = read_image(manual_artist_image_path(artist_name))
+            manual = QPixmap()
+            if manual_data:
+                manual.loadFromData(manual_data)
+            if not manual.isNull():
+                thumbnail = _circle_pixmap(manual, 126)
+            else:
+                sources: list[QPixmap] = []
+                for album in albums_by_artist.get(artist_name, []):
+                    candidates = [
+                        cover_cache_path(album["title"], artist_name),
+                        Path(album["cover_path"]) if album["cover_path"] else None,
+                    ]
+                    for candidate in candidates:
+                        if candidate is None or not candidate.is_file():
+                            continue
+                        pixmap = QPixmap(str(candidate))
+                        if not pixmap.isNull():
+                            sources.append(pixmap)
+                            break
+                    if len(sources) >= 4:
+                        break
+                if len(sources) < 4:
+                    for path in collage_cache_files(artist_name):
+                        pixmap = QPixmap(str(path))
+                        if not pixmap.isNull():
+                            sources.append(pixmap)
+                        if len(sources) >= 4:
+                            break
+                thumbnail = (
+                    _collage_pixmap(sources[:4], 126)
+                    if sources
+                    else _circle_pixmap(_default_pixmap(126), 126)
+                )
+            try:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                if thumbnail.save(str(destination), "PNG"):
+                    prepared += 1
+            except OSError:
+                continue
+        return prepared
+
+    def queue_artwork_updates(self) -> None:
+        """Busca portadas faltantes solo después de Actualizar biblioteca."""
         artists_with_albums: set[str] = set()
         for album in self.database.get_albums(None):
             artist_name = album["artist_name"] or album["album_artist"]
@@ -339,10 +420,9 @@ class ArtistsPage(QWidget):
                 artist_name,
                 album["cover_path"],
             )
-        for artist_name in self._artist_items:
+        for artist_name in (str(row["name"]) for row in self.database.get_artists()):
             if artist_name not in artists_with_albums:
                 self._collage_service.request(artist_name)
-        self._filter_artists(self.artist_search.text())
 
     def _filter_artists(self, text: str) -> None:
         query = text.strip().casefold()
@@ -363,19 +443,42 @@ class ArtistsPage(QWidget):
             return
         item = self._artist_items.get(artist)
         pixmap = QPixmap()
-        if item is not None and pixmap.loadFromData(data):
+        if pixmap.loadFromData(data):
             sources = self._collage_sources.setdefault(artist, [])
             if len(sources) < 4:
                 sources.append(pixmap)
-            item.setIcon(QIcon(_collage_pixmap(sources, 126)))
+            thumbnail = _collage_pixmap(sources, 126)
+            destination = artist_thumbnail_path(artist)
+            try:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                thumbnail.save(str(destination), "PNG")
+            except OSError:
+                pass
+            if item is not None:
+                item.setIcon(QIcon(thumbnail))
             if self.artist_heading.text() == artist:
                 for album_id, album in self._album_rows.items():
                     if album["title"] != "Pistas sueltas":
                         continue
                     label = self._album_cover_labels.get(album_id)
                     if label is not None:
-                        label.setPixmap(item.icon().pixmap(150, 150))
-            self.artwork_changed.emit()
+                        label.setPixmap(
+                            _album_pixmap(
+                                album,
+                                artist,
+                                (
+                                    item.icon().pixmap(150, 150)
+                                    if item is not None
+                                    else thumbnail
+                                ),
+                            ).scaled(
+                                150,
+                                150,
+                                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                Qt.TransformationMode.SmoothTransformation,
+                            )
+                        )
+            self._artwork_notify_timer.start()
 
     def _artist_context_menu(self, position: object) -> None:
         item = self.artist_grid.itemAt(position)
@@ -431,7 +534,11 @@ class ArtistsPage(QWidget):
                 return
             pixmap = QPixmap()
             pixmap.loadFromData(data)
-            item.setIcon(QIcon(_circle_pixmap(pixmap, 126)))
+            thumbnail = _circle_pixmap(pixmap, 126)
+            item.setIcon(QIcon(thumbnail))
+            destination = artist_thumbnail_path(artist_name)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            thumbnail.save(str(destination), "PNG")
             if self.artist_heading.text() == artist_name:
                 for label in self._album_cover_labels.values():
                     label.setPixmap(
@@ -494,8 +601,7 @@ class ArtistsPage(QWidget):
         pixmap = QPixmap()
         if not pixmap.loadFromData(data):
             return
-        primary = _primary_artist_pixmap(self.artist_heading.text())
-        display_pixmap = primary if not primary.isNull() else pixmap
+        display_pixmap = pixmap
         for index in range(self.album_grid.count()):
             item = self.album_grid.item(index)
             if int(item.data(Qt.ItemDataRole.UserRole)) == album_id:
@@ -512,7 +618,24 @@ class ArtistsPage(QWidget):
                 )
             )
         self.album_cover_ready.emit(album_id, data)
+        album = self.database.get_album_by_id(album_id)
+        if album is not None:
+            artist_name = str(album["artist_name"] or album["album_artist"])
+            self._pending_thumbnail_artists.add(artist_name)
+            self._thumbnail_refresh_timer.start()
         self.artwork_changed.emit()
+
+    def _flush_thumbnail_refresh(self) -> None:
+        artists = set(self._pending_thumbnail_artists)
+        self._pending_thumbnail_artists.clear()
+        if not artists:
+            return
+        self.prepare_artist_thumbnails(artists, force=True)
+        for artist in artists:
+            item = self._artist_items.get(artist)
+            pixmap = QPixmap(str(artist_thumbnail_path(artist)))
+            if item is not None and not pixmap.isNull():
+                item.setIcon(QIcon(pixmap))
 
     def _open_artist(self, item: QListWidgetItem) -> None:
         artist_id = int(item.data(Qt.ItemDataRole.UserRole))
@@ -532,9 +655,7 @@ class ArtistsPage(QWidget):
         for album in albums:
             tracks = self.database.get_tracks_for_album(album["id"])
             album_icon = (
-                item.icon()
-                if album["title"] == "Pistas sueltas"
-                else QIcon(_album_pixmap(album, artist_name))
+                QIcon(_album_pixmap(album, artist_name, item.icon().pixmap(150, 150)))
             )
             album_item = QListWidgetItem(
                 album_icon, album["title"]
@@ -615,10 +736,8 @@ class ArtistsPage(QWidget):
         cover.setObjectName("artistAlbumCover")
         cover.setFixedSize(150, 150)
         cover.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        pixmap = (
-            artist_item.icon().pixmap(150, 150)
-            if album["title"] == "Pistas sueltas"
-            else _album_pixmap(album, artist_name)
+        pixmap = _album_pixmap(
+            album, artist_name, artist_item.icon().pixmap(150, 150)
         )
         if not pixmap.isNull():
             cover.setPixmap(
@@ -1132,10 +1251,9 @@ def _collage_pixmap(sources: list[QPixmap], size: int) -> QPixmap:
     return result
 
 
-def _album_pixmap(album: object, artist: str) -> QPixmap:
-    primary = _primary_artist_pixmap(artist)
-    if not primary.isNull():
-        return primary
+def _album_pixmap(
+    album: object, artist: str, fallback: QPixmap | None = None
+) -> QPixmap:
     cache = cover_cache_path(album["title"], artist)
     candidates = [cache, Path(album["cover_path"]) if album["cover_path"] else None]
     for path in candidates:
@@ -1143,6 +1261,11 @@ def _album_pixmap(album: object, artist: str) -> QPixmap:
             pixmap = QPixmap(str(path))
             if not pixmap.isNull():
                 return pixmap
+    primary = _primary_artist_pixmap(artist)
+    if not primary.isNull():
+        return primary
+    if fallback is not None and not fallback.isNull():
+        return fallback
     return _default_pixmap(108)
 
 

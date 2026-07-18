@@ -77,6 +77,13 @@ def navigation_icon(kind: str, color: str = "#8fa7c7") -> QIcon:
     elif kind == "search":
         painter.drawEllipse(QRectF(4, 4, 11, 11))
         painter.drawLine(QPointF(14, 14), QPointF(20, 20))
+    elif kind == "refresh":
+        painter.drawArc(QRectF(4, 4, 16, 16), 35 * 16, 270 * 16)
+        path = QPainterPath()
+        path.moveTo(18.5, 4.5)
+        path.lineTo(19.5, 9)
+        path.lineTo(15, 8)
+        painter.drawPath(path)
     elif kind == "effects":
         painter.drawLine(QPointF(5, 5), QPointF(5, 19))
         painter.drawLine(QPointF(12, 5), QPointF(12, 19))
@@ -84,6 +91,10 @@ def navigation_icon(kind: str, color: str = "#8fa7c7") -> QIcon:
         painter.drawEllipse(QRectF(2.5, 8, 5, 5))
         painter.drawEllipse(QRectF(9.5, 13, 5, 5))
         painter.drawEllipse(QRectF(16.5, 6, 5, 5))
+    elif kind == "info":
+        painter.drawEllipse(QRectF(4, 4, 16, 16))
+        painter.drawLine(QPointF(12, 10.5), QPointF(12, 17))
+        painter.drawPoint(QPointF(12, 7.5))
     else:
         painter.drawEllipse(QRectF(5, 5, 14, 14))
 
@@ -114,5 +125,35 @@ def transport_icon(kind: str, color: str = "#e7edf7", size: int = 24) -> QIcon:
         painter.drawLine(QPointF(6, 6), QPointF(6, 18)); path = QPainterPath(); path.moveTo(18, 6); path.lineTo(8, 12); path.lineTo(18, 18); path.closeSubpath(); painter.drawPath(path)
     elif kind == "next":
         painter.drawLine(QPointF(18, 6), QPointF(18, 18)); path = QPainterPath(); path.moveTo(6, 6); path.lineTo(16, 12); path.lineTo(6, 18); path.closeSubpath(); painter.drawPath(path)
+    painter.end()
+    return QIcon(pixmap)
+
+
+def window_control_icon(kind: str, color: str = "#dce8f8", size: int = 20) -> QIcon:
+    """Iconos de ventana con el mismo trazo que los controles de transporte."""
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    pen = QPen(QColor(color), 1.7)
+    pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+    pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+    painter.setPen(pen)
+    painter.setBrush(Qt.BrushStyle.NoBrush)
+
+    if kind == "minimize":
+        painter.drawLine(QPointF(5, 14), QPointF(15, 14))
+    elif kind == "maximize":
+        painter.drawRect(QRectF(5.5, 5.5, 9, 9))
+    elif kind == "restore":
+        painter.drawRect(QRectF(4.5, 7.5, 8, 8))
+        painter.drawLine(QPointF(7.5, 7), QPointF(7.5, 4.5))
+        painter.drawLine(QPointF(7.5, 4.5), QPointF(15.5, 4.5))
+        painter.drawLine(QPointF(15.5, 4.5), QPointF(15.5, 12.5))
+        painter.drawLine(QPointF(15, 12.5), QPointF(12.8, 12.5))
+    elif kind == "close":
+        painter.drawLine(QPointF(6, 6), QPointF(14, 14))
+        painter.drawLine(QPointF(14, 6), QPointF(6, 14))
+
     painter.end()
     return QIcon(pixmap)
