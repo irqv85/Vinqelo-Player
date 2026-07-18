@@ -42,6 +42,7 @@ class LibraryPage(QWidget):
     play_requested = Signal(object)
     enqueue_requested = Signal(object)
     playlist_requested = Signal(object)
+    artist_requested = Signal(int)
 
     def __init__(self, database: DatabaseManager) -> None:
         super().__init__()
@@ -107,6 +108,7 @@ class LibraryPage(QWidget):
         self.top_artists.setObjectName("listeningArtists")
         self.top_artists.setIconSize(QSize(58, 58))
         self.top_artists.setSpacing(4)
+        self.top_artists.itemClicked.connect(self._open_top_artist)
         artist_layout.addWidget(self.top_artists, 1)
         dashboard.addWidget(artists_panel, 2)
 
@@ -187,6 +189,8 @@ class LibraryPage(QWidget):
                 f'{position}.  {artist["name"]}\n     {format_listening_time(seconds)} escuchados',
             )
             item.setSizeHint(QSize(0, 70))
+            item.setData(Qt.ItemDataRole.UserRole, int(artist["id"]))
+            item.setToolTip(f'Ir a {artist["name"]}')
             self.top_artists.addItem(item)
 
         self.top_tracks.clear()
@@ -205,20 +209,12 @@ class LibraryPage(QWidget):
                 ]
             )
             item.setIcon(0, QIcon(self._track_cover(row, artist)))
-            album_tracks = self._database.get_tracks_for_album(int(row["album_id"]))
-            start_index = next(
-                (
-                    index for index, track in enumerate(album_tracks)
-                    if track["file_path"] == row["file_path"]
-                ),
-                0,
-            )
             item.setData(
                 0,
                 Qt.ItemDataRole.UserRole,
                 _play_payload(
-                    album_tracks,
-                    start_index,
+                    tracks,
+                    position - 1,
                     {
                         "artist_id": row["artist_id"],
                         "album_id": row["album_id"],
@@ -272,6 +268,11 @@ class LibraryPage(QWidget):
         payload = item.data(0, Qt.ItemDataRole.UserRole)
         if payload:
             self.play_requested.emit(payload)
+
+    def _open_top_artist(self, item: QListWidgetItem) -> None:
+        artist_id = item.data(Qt.ItemDataRole.UserRole)
+        if artist_id is not None:
+            self.artist_requested.emit(int(artist_id))
 
     def _top_track_menu(self, position: object) -> None:
         item = self.top_tracks.itemAt(position)

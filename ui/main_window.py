@@ -141,6 +141,7 @@ class MainWindow(QMainWindow):
         self.library_page.open_file_requested.connect(self.open_audio_file)
         self.library_page.play_requested.connect(self._play_library_items)
         self.library_page.enqueue_requested.connect(self._enqueue_library_item)
+        self.library_page.artist_requested.connect(self._open_artist_from_dashboard)
         self.search_page.play_requested.connect(self._play_library_items)
         self.search_page.enqueue_requested.connect(self._enqueue_library_item)
         for page in (
@@ -273,6 +274,12 @@ class MainWindow(QMainWindow):
     def _add_page(self, key: str, page: QWidget) -> None:
         self._pages[key] = page
         self.stack.addWidget(page)
+
+    def _open_artist_from_dashboard(self, artist_id: int) -> None:
+        self.stack.setCurrentWidget(self.artists_page)
+        self.sidebar.select("artists", emit_signal=False)
+        self.artists_page.open_artist(int(artist_id))
+        self.setWindowTitle("Vinqelo Player — Artistas")
 
     def show_section(self, section: str) -> None:
         if section == "now_playing":

@@ -274,6 +274,93 @@ QTreeWidget::item:selected {
     font-weight: 600;
 }
 
+QScrollArea#albumRowsScroll,
+QWidget#albumRowsContainer {
+    background-color: transparent;
+    border: none;
+}
+
+QFrame#artistAlbumRow {
+    background-color: #0f1829;
+    border: 1px solid #263957;
+    border-radius: 9px;
+}
+
+QLabel#artistAlbumCover {
+    background-color: #111d31;
+    border: 1px solid #304563;
+    border-radius: 8px;
+}
+
+QLabel#artistAlbumTitle {
+    color: #f4f7fc;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+QTreeWidget#artistAlbumTracks {
+    background-color: #0b1424;
+    border-color: #263957;
+}
+
+QScrollBar:vertical {
+    background-color: #0b1424;
+    border: 1px solid #1c2d48;
+    border-radius: 6px;
+    margin: 2px;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #276fc9;
+    border-radius: 5px;
+    min-height: 36px;
+}
+
+QScrollBar::handle:vertical:hover,
+QScrollBar::handle:vertical:pressed {
+    background-color: #6f52d9;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background-color: transparent;
+}
+
+QScrollBar:horizontal {
+    background-color: #0b1424;
+    border: 1px solid #1c2d48;
+    border-radius: 6px;
+    height: 12px;
+    margin: 2px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #276fc9;
+    border-radius: 5px;
+    min-width: 36px;
+}
+
+QScrollBar::handle:horizontal:hover,
+QScrollBar::handle:horizontal:pressed {
+    background-color: #6f52d9;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background-color: transparent;
+}
+
 QListWidget#artistGrid,
 QListWidget#albumGrid,
 QListWidget#visualAlbumGrid {

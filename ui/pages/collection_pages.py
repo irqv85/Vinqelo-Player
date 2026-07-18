@@ -7,6 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QRectF, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QIcon, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
+    QFrame,
     QHBoxLayout,
     QLabel,
     QListView,
@@ -17,6 +18,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QMenu,
+    QScrollArea,
     QStackedWidget,
     QTreeWidget,
     QTreeWidgetItem,
@@ -260,30 +262,12 @@ class ArtistsPage(QWidget):
         detail_header.addWidget(self.artist_heading, 1)
         detail_header.addWidget(self.play_artist_button)
         detail_layout.addLayout(detail_header)
-        albums_label = QLabel("ÁLBUMES")
-        albums_label.setObjectName("columnHeader")
-        detail_layout.addWidget(albums_label)
-        self.album_grid = QListWidget()
-        self.album_grid.setObjectName("albumGrid")
-        self.album_grid.setViewMode(QListView.ViewMode.IconMode)
-        self.album_grid.setMovement(QListView.Movement.Static)
-        self.album_grid.setFlow(QListView.Flow.LeftToRight)
-        self.album_grid.setWrapping(False)
-        self.album_grid.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.album_grid.setIconSize(QSize(108, 108))
-        self.album_grid.setGridSize(QSize(148, 160))
-        self.album_grid.setFixedHeight(178)
-        self.album_grid.itemClicked.connect(self._show_album_tracks)
-        self.album_grid.itemDoubleClicked.connect(self._play_album)
-        self.album_grid.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.album_grid.customContextMenuRequested.connect(self._album_context_menu)
-        detail_layout.addWidget(self.album_grid)
-        self.tracks_label = QLabel("PISTAS")
-        self.tracks_label.setObjectName("columnHeader")
         track_filter_row = QHBoxLayout()
+        self.tracks_label = QLabel("ÁLBUMES Y PISTAS")
+        self.tracks_label.setObjectName("columnHeader")
         self.track_search = QLineEdit()
         self.track_search.setObjectName("trackSearch")
-        self.track_search.setPlaceholderText("Buscar pistas de este artista o álbum…")
+        self.track_search.setPlaceholderText("Buscar álbum o pista de este artista…")
         self.track_search.addAction(
             navigation_icon("search", "#8fa7c7"),
             QLineEdit.ActionPosition.LeadingPosition,
@@ -294,18 +278,29 @@ class ArtistsPage(QWidget):
         track_filter_row.addStretch(1)
         track_filter_row.addWidget(self.track_search)
         detail_layout.addLayout(track_filter_row)
-        self.track_tree = QTreeWidget()
-        self.track_tree.setHeaderLabels(["#", "TÍTULO", "ARTISTA", "DURACIÓN", "TIPO"])
-        self.track_tree.setAlternatingRowColors(True)
-        self.track_tree.setRootIsDecorated(False)
-        self.track_tree.itemDoubleClicked.connect(self._play_track)
-        self.track_tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.track_tree.customContextMenuRequested.connect(self._track_context_menu)
-        self.track_tree.setColumnWidth(0, 45)
-        self.track_tree.setColumnWidth(1, 390)
-        self.track_tree.setColumnWidth(2, 220)
-        detail_layout.addWidget(self.track_tree, 1)
+        self.album_scroll = QScrollArea()
+        self.album_scroll.setObjectName("albumRowsScroll")
+        self.album_scroll.setWidgetResizable(True)
+        self.album_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.album_rows_container = QWidget()
+        self.album_rows_container.setObjectName("albumRowsContainer")
+        self.album_rows_layout = QVBoxLayout(self.album_rows_container)
+        self.album_rows_layout.setContentsMargins(0, 0, 4, 0)
+        self.album_rows_layout.setSpacing(12)
+        self.album_rows_layout.addStretch(1)
+        self.album_scroll.setWidget(self.album_rows_container)
+        detail_layout.addWidget(self.album_scroll, 1)
+        # Se conservan como modelos internos para compatibilidad con la lógica
+        # existente de carátulas; la presentación visible usa filas horizontales.
+        self.album_grid = QListWidget(self)
+        self.album_grid.hide()
+        self.track_tree = QTreeWidget(self)
+        self.track_tree.hide()
         self.stack.addWidget(detail)
+        self._album_sections: dict[int, QFrame] = {}
+        self._album_track_trees: dict[int, QTreeWidget] = {}
+        self._album_cover_labels: dict[int, QLabel] = {}
+        self._album_rows: dict[int, object] = {}
         self._current_artist_queue: list[dict[str, str]] = []
         self._current_artist_id = -1
         self._playing_file = ""
@@ -374,10 +369,12 @@ class ArtistsPage(QWidget):
                 sources.append(pixmap)
             item.setIcon(QIcon(_collage_pixmap(sources, 126)))
             if self.artist_heading.text() == artist:
-                for index in range(self.album_grid.count()):
-                    album_item = self.album_grid.item(index)
-                    if album_item.text() == "Pistas sueltas":
-                        album_item.setIcon(item.icon())
+                for album_id, album in self._album_rows.items():
+                    if album["title"] != "Pistas sueltas":
+                        continue
+                    label = self._album_cover_labels.get(album_id)
+                    if label is not None:
+                        label.setPixmap(item.icon().pixmap(150, 150))
             self.artwork_changed.emit()
 
     def _artist_context_menu(self, position: object) -> None:
@@ -436,9 +433,15 @@ class ArtistsPage(QWidget):
             pixmap.loadFromData(data)
             item.setIcon(QIcon(_circle_pixmap(pixmap, 126)))
             if self.artist_heading.text() == artist_name:
-                for index in range(self.album_grid.count()):
-                    album_item = self.album_grid.item(index)
-                    album_item.setIcon(QIcon(pixmap))
+                for label in self._album_cover_labels.values():
+                    label.setPixmap(
+                        pixmap.scaled(
+                            150,
+                            150,
+                            Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                            Qt.TransformationMode.SmoothTransformation,
+                        )
+                    )
             self.primary_artist_changed.emit(artist_name, data)
             self.artwork_changed.emit()
 
@@ -498,6 +501,16 @@ class ArtistsPage(QWidget):
             if int(item.data(Qt.ItemDataRole.UserRole)) == album_id:
                 item.setIcon(QIcon(display_pixmap))
                 break
+        label = self._album_cover_labels.get(album_id)
+        if label is not None:
+            label.setPixmap(
+                display_pixmap.scaled(
+                    150,
+                    150,
+                    Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
         self.album_cover_ready.emit(album_id, data)
         self.artwork_changed.emit()
 
@@ -510,11 +523,13 @@ class ArtistsPage(QWidget):
         self._current_artist_queue = _queue(artist_tracks)
         artist_duration = sum(float(track["duration"] or 0) for track in artist_tracks)
         self.tracks_label.setText(
-            f"PISTAS DEL ARTISTA · {len(artist_tracks)} pistas · "
+            f"ÁLBUMES Y PISTAS · {len(artist_tracks)} pistas · "
             f"{_total_duration(artist_duration)}"
         )
+        self._clear_album_rows()
         self.album_grid.clear()
-        for album in self.database.get_albums_for_artist(artist_id):
+        albums = self.database.get_albums_for_artist(artist_id)
+        for album in albums:
             tracks = self.database.get_tracks_for_album(album["id"])
             album_icon = (
                 item.icon()
@@ -538,16 +553,227 @@ class ArtistsPage(QWidget):
                 f'{album["track_count"]} pistas · {_total_duration(album["total_duration"])}'
             )
             self.album_grid.addItem(album_item)
+            self._build_album_row(album, tracks, item, artist_name)
         self.play_artist_button.setText(
             "▶  Reproducir todos los álbumes"
-            if self.album_grid.count() > 1
+            if len(albums) > 1
             else "▶  Reproducir artista"
         )
         self.stack.setCurrentIndex(1)
-        if self.album_grid.count():
-            first = self.album_grid.item(0)
-            self.album_grid.setCurrentItem(first)
-            self._show_album_tracks(first)
+        self.album_scroll.verticalScrollBar().setValue(0)
+        if self._playing_file:
+            self.set_playing_file(self._playing_file)
+
+    def open_artist(self, artist_id: int) -> bool:
+        item = next(
+            (
+                self.artist_grid.item(index)
+                for index in range(self.artist_grid.count())
+                if int(self.artist_grid.item(index).data(Qt.ItemDataRole.UserRole))
+                == int(artist_id)
+            ),
+            None,
+        )
+        if item is None:
+            return False
+        self.artist_grid.setCurrentItem(item)
+        self._open_artist(item)
+        return True
+
+    def _clear_album_rows(self) -> None:
+        while self.album_rows_layout.count() > 1:
+            layout_item = self.album_rows_layout.takeAt(0)
+            widget = layout_item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._album_sections.clear()
+        self._album_track_trees.clear()
+        self._album_cover_labels.clear()
+        self._album_rows.clear()
+
+    def _build_album_row(
+        self,
+        album: object,
+        tracks: list[object],
+        artist_item: QListWidgetItem,
+        artist_name: str,
+    ) -> None:
+        album_id = int(album["id"])
+        row = QFrame()
+        row.setObjectName("artistAlbumRow")
+        row.setProperty("albumId", album_id)
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(13, 13, 13, 13)
+        row_layout.setSpacing(16)
+
+        artwork_box = QWidget()
+        artwork_box.setFixedWidth(164)
+        artwork_layout = QVBoxLayout(artwork_box)
+        artwork_layout.setContentsMargins(0, 0, 0, 0)
+        artwork_layout.setSpacing(6)
+        cover = QLabel()
+        cover.setObjectName("artistAlbumCover")
+        cover.setFixedSize(150, 150)
+        cover.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        pixmap = (
+            artist_item.icon().pixmap(150, 150)
+            if album["title"] == "Pistas sueltas"
+            else _album_pixmap(album, artist_name)
+        )
+        if not pixmap.isNull():
+            cover.setPixmap(
+                pixmap.scaled(
+                    150,
+                    150,
+                    Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+        cover.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        cover.customContextMenuRequested.connect(
+            lambda position, active_id=album_id, active_cover=cover:
+            self._album_row_context_menu(active_id, active_cover, position)
+        )
+        album_title = QLabel(str(album["title"]))
+        album_title.setObjectName("artistAlbumTitle")
+        album_title.setWordWrap(True)
+        album_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        metadata = QLabel(
+            f'{len(tracks)} pistas · {_total_duration(album["total_duration"])}'
+        )
+        metadata.setObjectName("mutedLabel")
+        metadata.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        play_album = QPushButton("▶  Reproducir álbum")
+        play_album.setObjectName("secondaryButton")
+        play_album.clicked.connect(
+            lambda _checked=False, active_tracks=tracks, active_id=album_id:
+            self.play_requested.emit(
+                _play_payload(
+                    active_tracks,
+                    context={
+                        "artist_id": self._current_artist_id,
+                        "album_id": active_id,
+                        "is_compilation": False,
+                    },
+                )
+            )
+        )
+        artwork_layout.addWidget(cover)
+        artwork_layout.addWidget(album_title)
+        artwork_layout.addWidget(metadata)
+        artwork_layout.addWidget(play_album)
+        artwork_layout.addStretch(1)
+
+        list_box = QWidget()
+        list_layout = QVBoxLayout(list_box)
+        list_layout.setContentsMargins(0, 0, 0, 0)
+        list_layout.setSpacing(6)
+        list_title = QLabel("LISTA DE TEMAS")
+        list_title.setObjectName("columnHeader")
+        tree = QTreeWidget()
+        tree.setObjectName("artistAlbumTracks")
+        tree.setHeaderLabels(["#", "TÍTULO", "ARTISTA", "DURACIÓN", "TIPO"])
+        tree.setRootIsDecorated(False)
+        tree.setAlternatingRowColors(True)
+        tree.setVerticalScrollMode(QTreeWidget.ScrollMode.ScrollPerPixel)
+        tree.setColumnWidth(0, 42)
+        tree.setColumnWidth(1, 340)
+        tree.setColumnWidth(2, 190)
+        tree.setColumnWidth(3, 90)
+        tree.itemDoubleClicked.connect(self._play_track)
+        tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        tree.customContextMenuRequested.connect(
+            lambda position, active_tree=tree:
+            self._album_track_context_menu(active_tree, position)
+        )
+        for index, track in enumerate(tracks):
+            track_item = _track_item(track)
+            track_item.setData(
+                0,
+                Qt.ItemDataRole.UserRole,
+                _play_payload(
+                    tracks,
+                    index,
+                    {
+                        "artist_id": self._current_artist_id,
+                        "album_id": album_id,
+                        "is_compilation": bool(track["is_compilation"]),
+                        "file_path": track["file_path"],
+                    },
+                ),
+            )
+            tree.addTopLevelItem(track_item)
+        tree.setFixedHeight(max(145, min(500, 38 + len(tracks) * 31)))
+        list_layout.addWidget(list_title)
+        list_layout.addWidget(tree)
+        row_layout.addWidget(artwork_box)
+        row_layout.addWidget(list_box, 1)
+        self.album_rows_layout.insertWidget(self.album_rows_layout.count() - 1, row)
+        self._album_sections[album_id] = row
+        self._album_track_trees[album_id] = tree
+        self._album_cover_labels[album_id] = cover
+        self._album_rows[album_id] = album
+
+    def _album_track_context_menu(self, tree: QTreeWidget, position: object) -> None:
+        item = tree.itemAt(position)
+        if item is None:
+            return
+        tree.setCurrentItem(item)
+        menu = QMenu(self)
+        enqueue = menu.addAction("Añadir a la cola")
+        playlist = menu.addAction("Añadir a lista de reproducción…")
+        selected = menu.exec(tree.viewport().mapToGlobal(position))
+        track = item.data(0, Qt.ItemDataRole.UserRole + 1)
+        if selected == enqueue:
+            self.enqueue_requested.emit(track)
+        elif selected == playlist:
+            self.playlist_requested.emit(track)
+
+    def _album_row_context_menu(
+        self, album_id: int, cover: QLabel, position: object
+    ) -> None:
+        album = self._album_rows.get(album_id)
+        if album is None:
+            return
+        menu = QMenu(self)
+        online = menu.addAction("Buscar carátula en internet…")
+        choose = menu.addAction("Buscar una carátula en el equipo…")
+        preview = menu.addAction("Ver carátula en grande")
+        selected = menu.exec(cover.mapToGlobal(position))
+        if selected == preview:
+            show_artwork(
+                self,
+                str(album["title"]),
+                cover.pixmap() if cover.pixmap() else QPixmap(),
+            )
+            return
+        if selected not in (online, choose):
+            return
+        artist = album["artist_name"] or album["album_artist"]
+        online_data = (
+            choose_online_artwork(
+                self, album["title"], kind="album", artist=artist
+            )
+            if selected == online
+            else None
+        )
+        source = (
+            choose_artwork(self, f'Buscar carátula de {album["title"]}')
+            if selected == choose
+            else None
+        )
+        if online_data is None and source is None:
+            return
+        try:
+            data = (
+                save_manual_album_data(album["title"], artist, online_data)
+                if online_data is not None
+                else save_manual_album_cover(album["title"], artist, source)
+            )
+        except (OSError, ValueError) as exc:
+            QMessageBox.warning(self, "No se pudo guardar", str(exc))
+            return
+        self._set_album_cover(album_id, data)
 
     def _show_album_tracks(self, item: QListWidgetItem) -> None:
         self.track_search.clear()
@@ -581,10 +807,26 @@ class ArtistsPage(QWidget):
 
     def _filter_tracks(self, text: str) -> None:
         query = text.strip().casefold()
-        for index in range(self.track_tree.topLevelItemCount()):
-            item = self.track_tree.topLevelItem(index)
-            searchable = " ".join(item.text(column) for column in (1, 2)).casefold()
-            item.setHidden(bool(query) and query not in searchable)
+        for album_id, tree in self._album_track_trees.items():
+            album = self._album_rows.get(album_id)
+            album_matches = bool(
+                album
+                and query
+                and query in str(album["title"]).casefold()
+            )
+            visible_tracks = 0
+            for index in range(tree.topLevelItemCount()):
+                item = tree.topLevelItem(index)
+                searchable = " ".join(
+                    item.text(column) for column in (1, 2)
+                ).casefold()
+                hidden = bool(query) and not album_matches and query not in searchable
+                item.setHidden(hidden)
+                if not hidden:
+                    visible_tracks += 1
+            section = self._album_sections.get(album_id)
+            if section is not None:
+                section.setVisible(not query or album_matches or visible_tracks > 0)
 
     def _play_current_artist(self) -> None:
         if self._current_artist_queue:
@@ -621,46 +863,39 @@ class ArtistsPage(QWidget):
             self.playlist_requested.emit(item.data(0, Qt.ItemDataRole.UserRole + 1))
 
     def locate(self, artist_id: int, album_id: int | None, file_path: str) -> bool:
-        artist_item = next(
-            (
-                self.artist_grid.item(index)
-                for index in range(self.artist_grid.count())
-                if int(self.artist_grid.item(index).data(Qt.ItemDataRole.UserRole)) == artist_id
-            ),
-            None,
-        )
-        if artist_item is None:
+        if not self.open_artist(artist_id):
             return False
-        self.artist_grid.setCurrentItem(artist_item)
-        self._open_artist(artist_item)
-        if album_id is not None:
-            album_item = next(
-                (
-                    self.album_grid.item(index)
-                    for index in range(self.album_grid.count())
-                    if int(self.album_grid.item(index).data(Qt.ItemDataRole.UserRole)) == album_id
-                ),
-                None,
-            )
-            if album_item is not None:
-                self.album_grid.setCurrentItem(album_item)
-                self._show_album_tracks(album_item)
-        for index in range(self.track_tree.topLevelItemCount()):
-            track_item = self.track_tree.topLevelItem(index)
-            payload = track_item.data(0, Qt.ItemDataRole.UserRole) or {}
-            context = payload.get("context", {}) if isinstance(payload, dict) else {}
-            if context.get("file_path") == file_path:
-                self.track_tree.setCurrentItem(track_item)
-                self.track_tree.scrollToItem(track_item)
-                break
+        trees = (
+            [(album_id, self._album_track_trees.get(album_id))]
+            if album_id is not None
+            else list(self._album_track_trees.items())
+        )
+        for active_album_id, tree in trees:
+            if tree is None:
+                continue
+            for index in range(tree.topLevelItemCount()):
+                track_item = tree.topLevelItem(index)
+                payload = track_item.data(0, Qt.ItemDataRole.UserRole) or {}
+                context = payload.get("context", {}) if isinstance(payload, dict) else {}
+                if context.get("file_path") != file_path:
+                    continue
+                tree.setCurrentItem(track_item)
+                tree.scrollToItem(track_item)
+                section = self._album_sections.get(int(active_album_id))
+                if section is not None:
+                    self.album_scroll.ensureWidgetVisible(section, 0, 24)
+                return True
         return True
 
     def mark_playing(self, file_path: str) -> bool:
-        return mark_playing_track(self.track_tree, file_path)
+        marked = False
+        for tree in self._album_track_trees.values():
+            marked = mark_playing_track(tree, file_path) or marked
+        return marked
 
     def set_playing_file(self, file_path: str) -> None:
         self._playing_file = file_path
-        mark_playing_track(self.track_tree, file_path)
+        self.mark_playing(file_path)
 
 
 class AlbumsPage(CollectionPage):
