@@ -30,7 +30,7 @@ class SmartPlaylistsPage(QWidget):
         self._exporter = PlaylistExportController(self)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 22, 28, 22)
-        title = QLabel("Smart Playlist")
+        title = QLabel("Listas inteligentes")
         title.setObjectName("pageTitle")
         subtitle = QLabel("Listas automáticas ordenadas por tiempo acumulado de reproducción.")
         subtitle.setObjectName("pageSubtitle")

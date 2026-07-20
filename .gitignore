@@ -1,13 +1,22 @@
-__pycache__/
-*.py[cod]
-*.sqlite3-shm
-*.sqlite3-wal
-database/*.sqlite3
+# Entornos virtuales
 .venv/
-.vscode/
+venv/
+
+# Compilaciones
 build/
 dist/
-*.spec
-!Vinqelo Player Store.spec
-logs/*.log
-cover_cache/
+
+# Instaladores y ejecutables
+*.exe
+*.msi
+*.msix
+*.appx
+*.pkg
+
+# Python
+__pycache__/
+*.pyc
+
+# Node y temporales
+node_modules/
+.tmp/

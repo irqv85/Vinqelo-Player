@@ -423,7 +423,7 @@ class MainWindow(QMainWindow):
                 "albums": "Álbumes",
                 "compilations": "Compilaciones",
                 "folders": "Carpetas",
-                "smart_playlists": "Smart Playlist",
+                "smart_playlists": "Listas inteligentes",
                 "playlists": "Listas de reproducción",
                 "queue": "Cola de reproducción",
             }

@@ -230,7 +230,7 @@ T: dict[str, dict[str, str]] = {
     "Restablecer consola": {"en": "Reset console", "pt": "Redefinir console", "fr": "Réinitialiser la console", "de": "Konsole zurücksetzen", "it": "Reimposta console"},
     "Seleccionar canciones": {"en": "Select tracks", "pt": "Selecionar músicas", "fr": "Sélectionner les pistes", "de": "Titel auswählen", "it": "Seleziona brani"},
     "Seleccionar todas": {"en": "Select all", "pt": "Selecionar todas", "fr": "Tout sélectionner", "de": "Alle auswählen", "it": "Seleziona tutto"},
-    "Smart Playlist": {"en": "Smart Playlists", "pt": "Playlists inteligentes", "fr": "Listes intelligentes", "de": "Intelligente Wiedergabelisten", "it": "Playlist intelligenti"},
+    "Listas inteligentes": {"en": "Smart Playlists", "pt": "Playlists inteligentes", "fr": "Listes intelligentes", "de": "Intelligente Wiedergabelisten", "it": "Playlist intelligenti"},
     "Global · Más escuchadas": {"en": "Global · Most listened", "pt": "Global · Mais ouvidas", "fr": "Global · Les plus écoutées", "de": "Global · Meistgehört", "it": "Globale · Più ascoltate"},
     "New · Últimos 30 días": {"en": "New · Last 30 days", "pt": "Novas · Últimos 30 dias", "fr": "Nouveautés · 30 derniers jours", "de": "Neu · Letzte 30 Tage", "it": "Novità · Ultimi 30 giorni"},
     "POR ARTISTA": {"en": "BY ARTIST", "pt": "POR ARTISTA", "fr": "PAR ARTISTE", "de": "NACH KÜNSTLER", "it": "PER ARTISTA"},

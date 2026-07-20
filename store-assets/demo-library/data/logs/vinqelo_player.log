@@ -1,0 +1,8 @@
+2026-07-20 14:30:57,905 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\store-assets\demo-library\data\library.sqlite3
+2026-07-20 14:30:58,515 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:30:58,852 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:30:58,984 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:34:18,568 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\store-assets\demo-library\data\library.sqlite3
+2026-07-20 14:34:19,201 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:34:20,323 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:34:20,457 | INFO | player.windows_media_session | Sesión multimedia de Windows activada

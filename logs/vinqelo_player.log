@@ -1,0 +1,415 @@
+2026-07-16 17:04:19,927 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\database\library.sqlite3
+2026-07-16 17:04:19,956 | INFO | main | Vinqelo Player iniciado
+2026-07-16 17:05:28,261 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\database\library.sqlite3
+2026-07-16 17:05:28,291 | INFO | main | Vinqelo Player iniciado
+2026-07-16 17:05:42,062 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\database\library.sqlite3
+2026-07-16 17:05:42,090 | INFO | main | Vinqelo Player iniciado
+2026-07-16 17:08:35,152 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\database\library.sqlite3
+2026-07-16 17:08:35,324 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-16 17:08:47,249 | INFO | ui.main_window | Carpeta seleccionada para futura importacion: C:\Users\IRQV8\Music\Ana Gabriel
+2026-07-16 17:09:41,959 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\database\library.sqlite3
+2026-07-16 17:09:42,125 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-16 17:17:23,048 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\database\library.sqlite3
+2026-07-16 17:17:23,187 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-16 17:17:23,319 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-16 17:17:32,759 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Ana Gabriel/1 Clemencia.mp3
+2026-07-17 11:07:52,766 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 11:07:53,663 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 11:07:54,146 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 13:34:10,771 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 13:34:11,106 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 13:34:11,227 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 13:50:18,777 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 13:50:19,045 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 13:50:19,233 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 13:50:32,863 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Ana Gabriel/1 Clemencia.mp3
+2026-07-17 13:52:42,428 | INFO | ui.main_window | Carpeta seleccionada para futura importacion: C:\Users\IRQV8\Music\Ana Gabriel
+2026-07-17 14:10:49,260 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 14:10:49,456 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 14:10:49,637 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 14:11:02,901 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Ana Gabriel/2 Un Viejo Amor.mp3
+2026-07-17 14:14:06,201 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Argenis Carruyo/01 Argenis Carruyo - Mi Vecina.mp3
+2026-07-17 14:14:36,637 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Camilo Sesto/13 Camilo Sesto - Piel de Angel.mp3
+2026-07-17 14:16:05,301 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 14:16:05,495 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 14:16:05,676 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 14:16:19,776 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Carlos Vives/Clasicos de la provincia/Carlos Vives - Alicia adorada (Remastered 30 años).mp3
+2026-07-17 14:21:54,213 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Binomio de Oro/Binomio de Oro - A Mano Dura.mp3
+2026-07-17 14:24:51,320 | INFO | ui.main_window | Carpeta seleccionada para futura importacion: C:\Users\IRQV8\Music\Aventura
+2026-07-17 14:25:09,154 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Carlos Vives/Clasicos de la provincia/Carlos Vives - La celosa (Remastered 30 años).mp3
+2026-07-17 14:25:20,240 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 14:25:20,438 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 14:25:20,617 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 14:30:05,352 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Carlos Vives/Clasicos de la provincia/Carlos Vives - El cantor de Fonseca (Remastered 30 años).mp3
+2026-07-17 14:33:47,546 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Bailables Billo Melodicos/Billo s Caracas Boys - Mi Cundé.mp3
+2026-07-17 14:36:34,483 | INFO | ui.main_window | Abriendo archivo de audio: C:/Users/IRQV8/Music/Elvis Crespo/Luna Llena - Elvis Crespo.mp3
+2026-07-17 14:38:11,219 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 14:38:11,405 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 14:38:11,639 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 14:38:18,415 | INFO | ui.main_window | Analizando biblioteca: C:\Users\IRQV8\Music
+2026-07-17 14:59:02,801 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 14:59:02,996 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 14:59:04,753 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:04:23,860 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/bf62b0b4-3ce0-42d1-a167-5c91e8bbae3e/front-500 - server replied with status code 404
+2026-07-17 15:07:04,006 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:07:04,195 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:07:05,984 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:21:49,168 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:21:49,366 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:21:53,772 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:28:05,646 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/75274e70-0727-4a9d-965b-d6c53d31444e/front-500 - server replied with status code 404
+2026-07-17 15:29:07,489 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:29:07,707 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:29:14,679 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:41:03,521 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:41:03,785 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:41:10,604 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:41:42,366 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/7f322095-4cb2-49df-af49-0ca950b746d9/front-500 - server replied with status code 404
+2026-07-17 15:41:46,722 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/5c32fbbe-d421-4fe3-9ca7-913e1068ee88/front-500 - server replied with status code 404
+2026-07-17 15:46:00,664 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/7866bc75-c1d0-46d2-b480-cd5d58f00870/front-500 - server replied with status code 404
+2026-07-17 15:48:17,293 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:48:17,559 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:48:25,151 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:48:41,495 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/359ad5a0-91d6-4911-98fb-ca539a4b8bd5/front-500 - server replied with status code 404
+2026-07-17 15:48:46,578 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/4805b549-a9f3-4695-b3ac-e41cc667d1e2/front-500 - server replied with status code 404
+2026-07-17 15:48:46,780 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3f50607d-3a7a-4563-99d6-b35e88064447/front-500 - server replied with status code 404
+2026-07-17 15:48:46,977 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/4b7f4d05-af33-45eb-aab3-cdc1b3f5ea36/front-500 - server replied with status code 404
+2026-07-17 15:48:47,175 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/96ef36be-094b-4d7b-9c8e-7e50c57124f1/front-500 - server replied with status code 404
+2026-07-17 15:51:09,587 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:51:09,853 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:51:17,522 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:52:24,386 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0676021d-5419-47b5-89b7-4270badeefa6/front-500 - server replied with status code 404
+2026-07-17 15:53:54,785 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:53:55,051 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:54:02,680 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:54:13,612 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0676021d-5419-47b5-89b7-4270badeefa6/front-500 - server replied with status code 404
+2026-07-17 15:58:18,112 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 15:58:18,373 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 15:58:25,976 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 15:58:40,920 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-17 15:58:45,389 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/c96e5b49-cb00-46d7-82c6-1f304b91e235/front-500 - server replied with status code 404
+2026-07-17 16:03:25,820 | INFO | library.cover_art | MusicBrainz no respondió: Error transferring https://musicbrainz.org/ws/2/recording/?query=recording:%22La Pecosa%22 AND artist:%22Pastor Lopez%22&fmt=json&limit=5 - server replied with status code 503
+2026-07-17 16:07:26,050 | INFO | library.cover_art | MusicBrainz no respondió: Error transferring https://musicbrainz.org/ws/2/recording/?query=recording:%22Muy Tropical, pero Buenisima: Morenita / Para que Goces / Pal Cumbión / Maracaibo%22 AND artist:%22Pastor Lopez%22&fmt=json&limit=5 - server replied with status code 503
+2026-07-17 16:07:33,639 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 16:07:33,925 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 16:07:42,258 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 16:08:01,292 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0676021d-5419-47b5-89b7-4270badeefa6/front-500 - server replied with status code 404
+2026-07-17 16:08:03,105 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/c96e5b49-cb00-46d7-82c6-1f304b91e235/front-500 - server replied with status code 404
+2026-07-17 16:14:29,039 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 16:14:29,290 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 16:14:35,367 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 16:14:55,166 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-17 16:18:15,371 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/25bc8c20-b53f-4aa1-b43a-5cdf4e1c61be/front-500 - server replied with status code 404
+2026-07-17 16:18:26,173 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0676021d-5419-47b5-89b7-4270badeefa6/front-500 - server replied with status code 404
+2026-07-17 16:19:32,734 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 16:19:32,985 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 16:19:39,779 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 16:30:23,420 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/25bc8c20-b53f-4aa1-b43a-5cdf4e1c61be/front-500 - server replied with status code 404
+2026-07-17 16:32:10,714 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 16:32:10,973 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 16:32:17,075 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 16:35:19,999 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0676021d-5419-47b5-89b7-4270badeefa6/front-500 - server replied with status code 404
+2026-07-17 16:35:25,596 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-17 16:35:50,996 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 16:35:51,323 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 16:36:04,306 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 16:48:38,537 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0217bc9f-1181-4c39-b82b-a878e49951e8/front-500 - server replied with status code 404
+2026-07-17 16:48:38,729 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/08018dec-ed01-4040-b2c4-383d34f47e04/front-500 - server replied with status code 404
+2026-07-17 16:48:38,916 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/fa818b86-0ec8-4d5b-8d44-fa450215c99f/front-500 - server replied with status code 404
+2026-07-17 16:51:55,286 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/4dc4a46e-c9a0-4ad5-9477-d7dd75029a52/front-500 - server replied with status code 404
+2026-07-17 16:51:55,487 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/5adf997a-f8d5-4ddc-8e1a-b3a31a948cb0/front-500 - server replied with status code 404
+2026-07-17 16:51:55,672 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/5adf997a-f8d5-4ddc-8e1a-b3a31a948cb0/front-500 - server replied with status code 404
+2026-07-17 16:51:57,377 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/721291fe-8ce4-4194-90b8-dce0291ccfdd/front-500 - server replied with status code 404
+2026-07-17 16:51:57,573 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/faf26d02-86b8-4aa0-be06-3277b6ae4fa6/front-500 - server replied with status code 404
+2026-07-17 16:51:57,775 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/aa7f8243-d6b5-43c3-80ad-b3ef8419e6aa/front-500 - server replied with status code 404
+2026-07-17 16:51:57,968 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/d8043ad2-5337-4353-8aaa-b0e04961ffa4/front-500 - server replied with status code 404
+2026-07-17 16:51:58,161 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/19f96755-9efc-4414-afa0-1d9f2278327d/front-500 - server replied with status code 404
+2026-07-17 16:55:23,570 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 16:55:23,959 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 16:55:39,552 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 16:56:52,011 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/1c2fd7da-3e55-4284-8165-66cd6e8c31cf/front-500 - server replied with status code 404
+2026-07-17 17:01:01,232 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 17:01:01,595 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 17:01:17,089 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 17:06:35,888 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-17 17:06:38,844 | INFO | library.cover_art | MusicBrainz no respondió: Error transferring https://musicbrainz.org/ws/2/recording/?query=recording:%22El Caimito%22 AND artist:%22Pastor Lopez%22&fmt=json&limit=5 - server replied with status code 503
+2026-07-17 17:08:11,777 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 17:08:12,158 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 17:08:27,841 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-17 17:08:38,725 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-17 17:11:59,210 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0217bc9f-1181-4c39-b82b-a878e49951e8/front-500 - server replied with status code 404
+2026-07-17 17:11:59,405 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/08018dec-ed01-4040-b2c4-383d34f47e04/front-500 - server replied with status code 404
+2026-07-17 17:11:59,597 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/fa818b86-0ec8-4d5b-8d44-fa450215c99f/front-500 - server replied with status code 404
+2026-07-17 17:15:39,454 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-17 17:15:39,841 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-17 17:15:57,876 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 10:02:17,895 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 10:02:18,510 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 10:02:40,360 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 10:15:44,701 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/c96e5b49-cb00-46d7-82c6-1f304b91e235/front-500 - server replied with status code 404
+2026-07-18 10:18:01,328 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 10:18:01,753 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 10:18:21,615 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 10:19:12,744 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/0676021d-5419-47b5-89b7-4270badeefa6/front-500 - server replied with status code 404
+2026-07-18 10:19:19,103 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/c96e5b49-cb00-46d7-82c6-1f304b91e235/front-500 - server replied with status code 404
+2026-07-18 10:50:06,498 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 10:50:06,986 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 10:50:29,190 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 10:50:40,940 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\1 Clemencia.mp3
+2026-07-18 10:50:40,940 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\1 Clemencia.mp3
+2026-07-18 10:50:43,552 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\2 Un Viejo Amor.mp3
+2026-07-18 10:50:43,552 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\2 Un Viejo Amor.mp3
+2026-07-18 10:50:45,113 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\3 Aburrido Me Voy.mp3
+2026-07-18 10:50:45,113 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\3 Aburrido Me Voy.mp3
+2026-07-18 10:50:45,694 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\4 Ya Se Va La Embarcación.mp3
+2026-07-18 10:50:45,694 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\4 Ya Se Va La Embarcación.mp3
+2026-07-18 10:50:46,072 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\5 La Despedida.mp3
+2026-07-18 10:50:46,072 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\5 La Despedida.mp3
+2026-07-18 10:50:46,332 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\6 Reconciliación.mp3
+2026-07-18 10:50:46,332 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\6 Reconciliación.mp3
+2026-07-18 10:50:46,582 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\7 Hay Unos Ojos.mp3
+2026-07-18 10:50:46,582 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\7 Hay Unos Ojos.mp3
+2026-07-18 10:50:46,803 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\8 Flor Triste.mp3
+2026-07-18 10:50:46,803 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\8 Flor Triste.mp3
+2026-07-18 10:50:47,027 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\9 Boda Negra (El Enterrador).mp3
+2026-07-18 10:50:47,027 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\9 Boda Negra (El Enterrador).mp3
+2026-07-18 10:50:47,368 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\10 Marchita El Alma.mp3
+2026-07-18 10:50:47,368 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\10 Marchita El Alma.mp3
+2026-07-18 10:50:47,755 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\11 A La Orilla De Un Palmar.mp3
+2026-07-18 10:50:47,755 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\11 A La Orilla De Un Palmar.mp3
+2026-07-18 10:50:47,985 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\12 Pobre Bohemio.mp3
+2026-07-18 10:50:47,985 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\12 Pobre Bohemio.mp3
+2026-07-18 10:50:48,220 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\13 Adios Mi Chaparrita.mp3
+2026-07-18 10:50:48,220 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\13 Adios Mi Chaparrita.mp3
+2026-07-18 10:50:48,446 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\14 La Barca De Oro.mp3
+2026-07-18 10:50:48,446 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\14 La Barca De Oro.mp3
+2026-07-18 10:50:48,683 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\15 Valentin De La Sierra.mp3
+2026-07-18 10:50:48,683 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\15 Valentin De La Sierra.mp3
+2026-07-18 10:50:55,230 | INFO | ui.main_window | Analizando biblioteca: C:\Users\IRQV8\Music
+2026-07-18 10:52:27,469 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\1 Clemencia.mp3
+2026-07-18 10:52:27,469 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\1 Clemencia.mp3
+2026-07-18 10:52:28,848 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\2 Un Viejo Amor.mp3
+2026-07-18 10:52:28,848 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\2 Un Viejo Amor.mp3
+2026-07-18 10:52:30,010 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\3 Aburrido Me Voy.mp3
+2026-07-18 10:52:30,010 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\3 Aburrido Me Voy.mp3
+2026-07-18 10:52:30,554 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\4 Ya Se Va La Embarcación.mp3
+2026-07-18 10:52:30,554 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\4 Ya Se Va La Embarcación.mp3
+2026-07-18 10:52:31,129 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\5 La Despedida.mp3
+2026-07-18 10:52:31,129 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\5 La Despedida.mp3
+2026-07-18 10:52:31,335 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\6 Reconciliación.mp3
+2026-07-18 10:52:31,335 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\6 Reconciliación.mp3
+2026-07-18 10:52:31,535 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\7 Hay Unos Ojos.mp3
+2026-07-18 10:52:31,535 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\7 Hay Unos Ojos.mp3
+2026-07-18 10:52:31,737 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\8 Flor Triste.mp3
+2026-07-18 10:52:31,737 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\8 Flor Triste.mp3
+2026-07-18 10:52:32,178 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\9 Boda Negra (El Enterrador).mp3
+2026-07-18 10:52:32,178 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\9 Boda Negra (El Enterrador).mp3
+2026-07-18 10:52:32,499 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\10 Marchita El Alma.mp3
+2026-07-18 10:52:32,499 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\10 Marchita El Alma.mp3
+2026-07-18 10:52:32,814 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\11 A La Orilla De Un Palmar.mp3
+2026-07-18 10:52:32,814 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\11 A La Orilla De Un Palmar.mp3
+2026-07-18 10:52:33,120 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\12 Pobre Bohemio.mp3
+2026-07-18 10:52:33,120 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\12 Pobre Bohemio.mp3
+2026-07-18 10:52:33,499 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\13 Adios Mi Chaparrita.mp3
+2026-07-18 10:52:33,499 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\13 Adios Mi Chaparrita.mp3
+2026-07-18 10:52:33,972 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\14 La Barca De Oro.mp3
+2026-07-18 10:52:33,972 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\14 La Barca De Oro.mp3
+2026-07-18 10:52:34,232 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\15 Valentin De La Sierra.mp3
+2026-07-18 10:52:34,232 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\15 Valentin De La Sierra.mp3
+2026-07-18 11:05:44,169 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:05:44,602 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:06:05,897 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:06:08,272 | INFO | ui.main_window | Sincronizando 1 raíz(es) de biblioteca
+2026-07-18 11:06:16,412 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\1 Clemencia.mp3
+2026-07-18 11:06:16,412 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\1 Clemencia.mp3
+2026-07-18 11:06:17,664 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\2 Un Viejo Amor.mp3
+2026-07-18 11:06:17,664 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\2 Un Viejo Amor.mp3
+2026-07-18 11:06:18,065 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\3 Aburrido Me Voy.mp3
+2026-07-18 11:06:18,065 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\3 Aburrido Me Voy.mp3
+2026-07-18 11:06:18,282 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\4 Ya Se Va La Embarcación.mp3
+2026-07-18 11:06:18,282 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\4 Ya Se Va La Embarcación.mp3
+2026-07-18 11:06:18,491 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\5 La Despedida.mp3
+2026-07-18 11:06:18,491 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\5 La Despedida.mp3
+2026-07-18 11:06:18,700 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\6 Reconciliación.mp3
+2026-07-18 11:06:18,700 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\6 Reconciliación.mp3
+2026-07-18 11:06:18,919 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\7 Hay Unos Ojos.mp3
+2026-07-18 11:06:18,919 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\7 Hay Unos Ojos.mp3
+2026-07-18 11:06:19,117 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\8 Flor Triste.mp3
+2026-07-18 11:06:19,117 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\8 Flor Triste.mp3
+2026-07-18 11:06:19,332 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\9 Boda Negra (El Enterrador).mp3
+2026-07-18 11:06:19,332 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\9 Boda Negra (El Enterrador).mp3
+2026-07-18 11:06:19,532 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\10 Marchita El Alma.mp3
+2026-07-18 11:06:19,532 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\10 Marchita El Alma.mp3
+2026-07-18 11:06:19,744 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\11 A La Orilla De Un Palmar.mp3
+2026-07-18 11:06:19,744 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\11 A La Orilla De Un Palmar.mp3
+2026-07-18 11:06:19,949 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\12 Pobre Bohemio.mp3
+2026-07-18 11:06:19,949 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\12 Pobre Bohemio.mp3
+2026-07-18 11:06:20,158 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\13 Adios Mi Chaparrita.mp3
+2026-07-18 11:06:20,158 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\13 Adios Mi Chaparrita.mp3
+2026-07-18 11:06:20,371 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\14 La Barca De Oro.mp3
+2026-07-18 11:06:20,371 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\14 La Barca De Oro.mp3
+2026-07-18 11:06:20,595 | WARNING | player.controller | El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\15 Valentin De La Sierra.mp3
+2026-07-18 11:06:20,595 | ERROR | ui.main_window | Error de reproducción: El archivo no existe: C:\Users\IRQV8\Music\Ana Gabriel\15 Valentin De La Sierra.mp3
+2026-07-18 11:06:51,472 | INFO | ui.main_window | Biblioteca sincronizada: 0 movida(s), 15 eliminada(s)
+2026-07-18 11:14:44,491 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:14:45,043 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:15:06,524 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:15:08,893 | INFO | ui.main_window | Sincronizando 1 raíz(es) de biblioteca
+2026-07-18 11:15:50,343 | INFO | ui.main_window | Biblioteca sincronizada: 0 movida(s), 0 eliminada(s)
+2026-07-18 11:23:28,444 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:23:29,035 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:23:52,992 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:23:55,590 | INFO | ui.main_window | Se detectaron cambios en 1 raíz(es) de biblioteca
+2026-07-18 11:23:56,992 | INFO | ui.main_window | Sincronizando 1 raíz(es) de biblioteca
+2026-07-18 11:24:42,489 | INFO | ui.main_window | Biblioteca sincronizada: 0 movida(s), 0 eliminada(s)
+2026-07-18 11:34:18,222 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:34:18,853 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:34:19,295 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:34:24,515 | INFO | ui.main_window | Sincronizando 1 raíz(es) de biblioteca
+2026-07-18 11:34:43,945 | INFO | ui.main_window | Biblioteca sincronizada: 0 movida(s), 0 eliminada(s)
+2026-07-18 11:35:13,824 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:35:14,442 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:35:14,905 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:48:06,890 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:48:07,575 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:48:08,064 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:54:23,344 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:54:24,058 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:54:24,553 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:54:24,566 | INFO | ui.main_window | Teclas multimedia globales activadas
+2026-07-18 11:55:47,225 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:55:47,899 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:55:48,388 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:55:48,402 | INFO | ui.main_window | Teclas multimedia globales activadas
+2026-07-18 11:57:00,586 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 11:57:01,248 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 11:57:01,734 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 11:57:01,747 | INFO | ui.main_window | Teclas multimedia globales activadas
+2026-07-18 11:58:35,179 | INFO | ui.main_window | Sincronizando 1 raíz(es) de biblioteca
+2026-07-18 11:59:11,385 | INFO | ui.main_window | Miniaturas de artistas preparadas: 46
+2026-07-18 11:59:11,689 | INFO | ui.main_window | Biblioteca sincronizada: 0 movida(s), 0 eliminada(s)
+2026-07-18 12:08:36,976 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 12:08:37,705 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 12:08:38,220 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 12:08:38,231 | INFO | ui.main_window | Teclas multimedia activadas: hook global y 4 hotkeys
+2026-07-18 12:11:18,153 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 12:11:18,802 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 12:11:19,300 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 12:11:19,313 | INFO | ui.main_window | Teclas multimedia activadas: hook global y 4 hotkeys
+2026-07-18 12:11:36,708 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-18 12:28:21,250 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-18 12:28:21,912 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-18 12:28:22,371 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-18 12:28:22,857 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 07:44:26,914 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 07:44:28,317 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 07:44:29,034 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 07:44:29,835 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 07:48:46,042 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 07:48:46,905 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 07:48:47,438 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 07:48:47,557 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 07:53:38,474 | INFO | ui.main_window | Sincronizando 1 raíz(es) de biblioteca
+2026-07-20 07:54:51,801 | INFO | ui.main_window | Miniaturas de artistas preparadas: 48
+2026-07-20 07:54:52,069 | INFO | ui.main_window | Biblioteca sincronizada: 0 movida(s), 0 eliminada(s)
+2026-07-20 07:54:54,073 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 07:58:28,724 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/c96e5b49-cb00-46d7-82c6-1f304b91e235/front-500 - server replied with status code 404
+2026-07-20 08:03:41,553 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 08:03:48,479 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 08:06:49,267 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 08:09:38,378 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 08:09:39,229 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 08:09:39,771 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 08:09:39,897 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 08:09:45,895 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 08:10:09,834 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 08:13:15,746 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/c96e5b49-cb00-46d7-82c6-1f304b91e235/front-500 - server replied with status code 404
+2026-07-20 08:18:59,007 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/74d6be9a-5236-455a-8e30-d2eb9498240a/front-500 - server replied with status code 404
+2026-07-20 08:22:09,600 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 08:22:10,500 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 08:22:11,231 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 08:22:11,356 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 08:26:58,806 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/74d6be9a-5236-455a-8e30-d2eb9498240a/front-500 - server replied with status code 404
+2026-07-20 08:27:49,642 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/74d6be9a-5236-455a-8e30-d2eb9498240a/front-500 - server replied with status code 404
+2026-07-20 08:50:18,158 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 08:50:19,126 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 08:50:19,811 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 08:50:19,945 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:12:10,105 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:12:11,148 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:12:11,799 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:12:11,934 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:16:46,068 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 09:22:35,112 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 09:24:25,059 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:24:26,132 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:24:26,894 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:24:27,030 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:24:29,123 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 09:24:30,773 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/3db4083f-9f77-46a6-b26e-95c408eb77f0/front-500 - server replied with status code 404
+2026-07-20 09:30:47,098 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:30:48,097 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:30:48,866 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:30:49,012 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:31:12,813 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:31:13,750 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:31:14,385 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:31:14,518 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:32:37,360 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:32:38,317 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:32:38,960 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:32:39,092 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:35:26,786 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:35:27,725 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:35:28,364 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:35:28,497 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:37:47,615 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:37:48,543 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:37:49,174 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:37:49,307 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 09:41:20,371 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 09:41:21,388 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 09:41:22,034 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 09:41:22,164 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 10:03:57,337 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/73d8d0e1-2585-49b7-955f-99f72bd20294/front-500 - server replied with status code 404
+2026-07-20 10:08:16,091 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/fee73b11-af5e-4075-a418-e70e3e494139/front-500 - server replied with status code 404
+2026-07-20 13:58:13,098 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 13:58:15,249 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 13:58:16,137 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 13:58:17,075 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 13:59:50,769 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 13:59:51,839 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 13:59:52,480 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 13:59:52,956 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:03:35,085 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 14:03:35,694 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:03:36,322 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:03:36,459 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:04:24,059 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 14:04:24,670 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:04:25,290 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:04:25,426 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:05:06,338 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 14:05:06,972 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:05:07,622 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:05:07,763 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:06:34,249 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 14:06:34,875 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:06:35,514 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:06:35,651 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:07:41,493 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 14:07:42,113 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:07:42,750 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:07:42,888 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:09:48,928 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 14:09:49,528 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:09:50,162 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:09:50,297 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 14:12:45,878 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 14:12:46,517 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 14:12:47,139 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 14:12:47,275 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-20 16:57:50,113 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-20 16:57:50,737 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-20 16:57:51,437 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-20 16:57:51,578 | INFO | player.windows_media_session | Sesión multimedia de Windows activada

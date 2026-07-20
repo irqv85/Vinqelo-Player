@@ -21,7 +21,7 @@ class Sidebar(QFrame):
         ("albums", "Álbumes", "albums"),
         ("compilations", "Compilaciones", "compilations"),
         ("folders", "Carpetas", "folders"),
-        ("smart_playlists", "Smart Playlist", "queue"),
+        ("smart_playlists", "Listas inteligentes", "queue"),
         ("playlists", "Listas de reproducción", "queue"),
     )
     PLAYBACK_SECTIONS = (
