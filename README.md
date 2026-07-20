@@ -1,15 +1,14 @@
 # Vinqelo Player
 
-Vinqelo Player es un reproductor de música local para Windows, construido con
-Python 3.12, PySide6, SQLite, VLC y Mutagen. Organiza la colección según las
-carpetas reales del usuario y ofrece una interfaz oscura inspirada en los
-reproductores clásicos de escritorio.
+Vinqelo Player es un reproductor de música local para Windows. Organiza la
+colección según las carpetas reales del usuario y ofrece una interfaz oscura,
+rápida y adaptable.
 
 ## Funciones incluidas
 
 ### Reproducción
 
-- MP3, FLAC, WAV, OGG, M4A y AAC mediante VLC.
+- Reproducción de MP3, FLAC, WAV, OGG, M4A y AAC.
 - Reproducir, pausar, detener, pista anterior y pista siguiente.
 - Barra de progreso, duración, búsqueda dentro de la pista y volumen persistente.
 - Reproducción consecutiva de carpetas, álbumes, compilaciones y listas.
@@ -35,7 +34,7 @@ Mi biblioteca/
 - Las etiquetas internas nunca cambian automáticamente ese artista o álbum.
 - Las pistas colocadas directamente dentro del artista se reúnen en
   `Pistas sueltas`.
-- Carpetas como `Vallenatos varios`, `Mix`, `Playlist`, `Spotify` o similares
+- Carpetas como `Vallenatos varios`, `Mix`, `Playlist` o similares
   pueden clasificarse como compilaciones de `Varios artistas`.
 - Carpetas, artistas, álbumes y listas muestran cantidad de pistas y duración total.
 - La sección Carpetas permite navegar por toda la estructura importada.
@@ -54,7 +53,7 @@ Mi biblioteca/
 - Prioridad para `cover.jpg`, `cover.png`, `folder.jpg`, `folder.png`,
   `front.jpg` y `front.png`.
 - Carátula genérica cuando no hay una imagen disponible.
-- Búsqueda de carátulas musicales mediante Deezer, MusicBrainz y Cover Art Archive.
+- Búsqueda de carátulas musicales en internet.
 - Ventana con varias opciones antes de escoger una imagen de internet.
 - Selección manual de imágenes guardadas en el equipo.
 - Clic derecho sobre artistas y álbumes para fijar una imagen permanente.
@@ -105,20 +104,20 @@ Desde la sección Carpetas:
 - Nunca se sobrescribe silenciosamente un archivo existente.
 - La cola activa se actualiza aunque la canción esté reproduciéndose.
 - Clic derecho en un álbum → **Buscar datos del álbum en internet…**.
-- MusicBrainz muestra diferentes ediciones y su lista oficial de pistas.
+- El catálogo musical en línea muestra diferentes ediciones y sus listas de pistas.
 - Tabla comparativa editable antes de aplicar títulos manual o masivamente.
 - Este proceso no cambia el artista ni el álbum definidos por las carpetas.
 
 ### Consola de sonido
 
 - Botón de efectos situado junto a Stop.
-- Preamplificador VLC de −20 a +20 dB.
+- Preamplificador de −20 a +20 dB.
 - Punto de resistencia en +6 dB: hay que soltar y volver a mover el fader para
   superar el nivel recomendado.
 - Ecualizador configurable de seis bandas.
 - Ganancia independiente de −20 a +20 dB por banda.
 - Selector de frecuencia debajo de cada banda, expresado en Hz o kHz.
-- Frecuencias compatibles con las diez bandas nativas de VLC, desde 31,25 Hz
+- Frecuencias disponibles desde 31,25 Hz
   hasta 16 kHz.
 - Medidor VU LED vertical y dinámico junto al Preamp.
 - Configuración de sonido guardada entre ejecuciones.
@@ -140,7 +139,6 @@ Desde la sección Carpetas:
 
 - Windows de 64 bits.
 - Python 3.12 de 64 bits.
-- VLC Media Player de 64 bits.
 
 ### Preparar el entorno
 
@@ -174,7 +172,7 @@ El portable actual se encuentra en:
 dist/Vinqelo Player Portable.exe
 ```
 
-Incluye Python, PySide6, Mutagen y VLC, por lo que no requiere instalaciones
+Incluye todos los componentes necesarios, por lo que no requiere instalaciones
 adicionales. Al iniciarlo crea junto al ejecutable:
 
 ```text
@@ -202,7 +200,7 @@ dist/Vinqelo Player Setup 0.7.0.exe
 ```
 
 El instalador trabaja por usuario y no solicita permisos de administrador.
-Detecta el idioma de Windows entre español, inglés, portugués, francés, alemán
+Al comenzar permite elegir entre español, inglés, portugués, francés, alemán
 e italiano. Puede crear un acceso directo y registrar Vinqelo para abrir MP3,
 FLAC, WAV, OGG, M4A y AAC. Cada formato tiene un icono Vinqelo identificable.
 
@@ -216,7 +214,7 @@ actualizar el programa.
 
 - Validación de carpetas inexistentes.
 - Archivos dañados o metadatos faltantes no detienen el resto de la importación.
-- Mensajes claros cuando VLC no puede reproducir un archivo.
+- Mensajes claros cuando un archivo no puede reproducirse.
 - Registro técnico en `logs/vinqelo_player.log` o en la carpeta de datos portable.
 - Rutas completas únicas en SQLite para evitar canciones duplicadas.
 
