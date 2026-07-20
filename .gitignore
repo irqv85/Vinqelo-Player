@@ -8,5 +8,6 @@ database/*.sqlite3
 build/
 dist/
 *.spec
+!Vinqelo Player Store.spec
 logs/*.log
 cover_cache/
