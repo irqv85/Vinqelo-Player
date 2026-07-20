@@ -164,77 +164,20 @@ Iniciar Vinqelo Player.bat
 En desarrollo, SQLite se guarda en `database/library.sqlite3` y los errores en
 `logs/vinqelo_player.log`.
 
-## Versión portable para Windows
-
-El portable actual se encuentra en:
-
-```text
-dist/Vinqelo Player Portable.exe
-```
-
-Incluye todos los componentes necesarios, por lo que no requiere instalaciones
-adicionales. Al iniciarlo crea junto al ejecutable:
-
-```text
-Vinqelo Player Portable.exe
-Vinqelo Player Data/
-  library.sqlite3
-  cover_cache/
-  logs/
-```
-
-Para conservar biblioteca, listas, carátulas e historial al trasladarlo, copie
-juntos el `.exe` y `Vinqelo Player Data`. Los archivos musicales no se copian:
-deben seguir disponibles en la otra PC. Mantener las mismas rutas o la misma
-letra del disco externo evita tener que importar la colección nuevamente.
-
-Windows SmartScreen puede advertir sobre el ejecutable porque esta compilación
-no está firmada con un certificado comercial.
-
-## Instalador para Windows
-
-El asistente de instalación se encuentra en:
-
-```text
-dist/Vinqelo Player Setup 0.7.0.exe
-```
-
-El instalador trabaja por usuario y no solicita permisos de administrador.
-Al comenzar permite elegir entre español, inglés, portugués, francés, alemán
-e italiano. Puede crear un acceso directo y registrar Vinqelo para abrir MP3,
-FLAC, WAV, OGG, M4A y AAC. Cada formato tiene un icono Vinqelo identificable.
-
-En la primera ejecución de una instalación nueva se confirma la carpeta Música
-detectada por Windows. También puede elegirse otra carpeta o completar esta
-configuración después. La biblioteca, las carátulas, las listas y el historial
-se guardan en `Vinqelo Player Data` junto a la instalación y se conservan al
-actualizar el programa.
-
 ## Manejo de errores
 
 - Validación de carpetas inexistentes.
 - Archivos dañados o metadatos faltantes no detienen el resto de la importación.
 - Mensajes claros cuando un archivo no puede reproducirse.
-- Registro técnico en `logs/vinqelo_player.log` o en la carpeta de datos portable.
+- Registro técnico en `logs/vinqelo_player.log`.
 - Rutas completas únicas en SQLite para evitar canciones duplicadas.
-
-## Fuera del alcance actual
-
-Todavía no se incluyen:
-
-- Android.
-- Sincronización entre equipos.
-- Streaming o vídeo.
-- Conversión automática a OGG.
-- Búsqueda o descarga de archivos musicales.
-- Firma comercial del ejecutable portable.
 
 ## Pruebas
 
 La suite automatizada se ejecuta con:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+python -m unittest discover -s tests -v
 ```
 
 Actualmente cubre base de datos, escaneo de bibliotecas, formatos, reproducción,
