@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="irqv8.VinqeloPlayer"
+    Publisher="CN=516D3D9D-99E2-4CEF-8F75-6AE32D0DFA72"
+    Version="0.7.0.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Vinqelo Player</DisplayName>
+    <PublisherDisplayName>irqv8</PublisherDisplayName>
+    <Description>Reproductor y biblioteca de musica local.</Description>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Resources>
+    <Resource Language="es" />
+    <Resource Language="en" />
+    <Resource Language="pt" />
+    <Resource Language="fr" />
+    <Resource Language="de" />
+    <Resource Language="it" />
+  </Resources>
+
+  <Dependencies>
+    <TargetDeviceFamily
+      Name="Windows.Desktop"
+      MinVersion="10.0.19041.0"
+      MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Applications>
+    <Application
+      Id="VinqeloPlayer"
+      Executable="Vinqelo Player.exe"
+      EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Vinqelo Player"
+        Description="Reproductor y biblioteca de musica local."
+        BackgroundColor="#0B1424"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="vinqeloaudio">
+            <uap:DisplayName>Archivo de audio de Vinqelo</uap:DisplayName>
+            <uap:Logo>Assets\AudioFileLogo.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType ContentType="audio/mpeg">.mp3</uap:FileType>
+              <uap:FileType ContentType="audio/flac">.flac</uap:FileType>
+              <uap:FileType ContentType="audio/wav">.wav</uap:FileType>
+              <uap:FileType ContentType="audio/ogg">.ogg</uap:FileType>
+              <uap:FileType ContentType="audio/mp4">.m4a</uap:FileType>
+              <uap:FileType ContentType="audio/aac">.aac</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

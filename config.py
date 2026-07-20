@@ -12,6 +12,7 @@ APP_VERSION = "0.7.0"
 APP_AUTHOR = "Irán Quintero"
 APP_AUTHOR_EMAIL = "vinqeloapp@gmail.com"
 APP_LICENSE = "GNU General Public License v3.0"
+STORE_PACKAGE_FAMILY_NAME = "irqv8.VinqeloPlayer_4mh58ts6mv4gw"
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 
@@ -23,6 +24,19 @@ def _runtime_root() -> Path:
     custom_root = os.environ.get("VINQELO_DATA_DIR")
     if custom_root:
         return Path(custom_root).expanduser().resolve()
+
+    if os.environ.get("VINQELO_STORE_BUILD") == "1":
+        # Un paquete MSIX se instala en una ubicacion de solo lectura. Los datos
+        # duraderos de la biblioteca viven en LocalState, como espera Windows.
+        local_app_data = Path(
+            os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")
+        )
+        return (
+            local_app_data
+            / "Packages"
+            / STORE_PACKAGE_FAMILY_NAME
+            / "LocalState"
+        )
 
     if _is_frozen():
         # La edición empaquetada es portable: conserva biblioteca, carátulas y
