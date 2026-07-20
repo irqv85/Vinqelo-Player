@@ -1,5 +1,10 @@
 """Tema oscuro compacto inspirado en reproductores de biblioteca clásicos."""
 
+from __future__ import annotations
+
+import re
+
+
 APP_STYLESHEET = """
 QWidget {
     color: #e7edf7;
@@ -28,6 +33,9 @@ QPushButton[windowControl="true"] {
     border-radius: 14px;
     color: #a9bad1;
     font-size: 14px;
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
 }
 
 QPushButton[windowControl="true"]:hover {
@@ -51,6 +59,32 @@ QToolTip {
     padding: 5px 7px;
 }
 
+/* Base obligatoria para cualquier botón nuevo: nunca heredar blanco de Windows. */
+QPushButton {
+    background-color: #17243a;
+    border: 1px solid #304563;
+    border-radius: 6px;
+    color: #e7edf7;
+    min-height: 30px;
+    padding: 0 12px;
+}
+
+QPushButton:hover {
+    background-color: #1e304d;
+    border-color: #3b82f6;
+    color: #ffffff;
+}
+
+QPushButton:pressed {
+    background-color: #122039;
+}
+
+QPushButton:disabled {
+    background-color: #111a2b;
+    border-color: #263348;
+    color: #5f6d82;
+}
+
 QDialog,
 QMessageBox,
 QProgressDialog {
@@ -72,6 +106,182 @@ QProgressDialog QPushButton {
     min-height: 30px;
     min-width: 82px;
     padding: 0 12px;
+}
+
+QMessageBox#initialLibraryDialog QPushButton#initialLibraryButton {
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    min-height: 27px;
+    min-width: 0;
+    padding: 0 9px;
+}
+
+QDialog QLineEdit,
+QDialog QComboBox,
+QDialog QSpinBox,
+QDialog QDoubleSpinBox {
+    background-color: #0b1424;
+    border: 1px solid #304563;
+    border-radius: 5px;
+    color: #f4f7fc;
+    min-height: 30px;
+    padding: 0 8px;
+    selection-background-color: #176fe5;
+}
+
+QDialog QComboBox QAbstractItemView {
+    background-color: #111c30;
+    border: 1px solid #304563;
+    color: #f4f7fc;
+    selection-background-color: #1b477c;
+    selection-color: #ffffff;
+}
+
+QCheckBox {
+    color: #dce7f7;
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    background-color: #0b1424;
+    border: 1px solid #3a5275;
+    border-radius: 3px;
+    height: 16px;
+    width: 16px;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #176fe5;
+    border-color: #4b9aff;
+}
+
+QListWidget#exportTrackList {
+    background-color: #0b1424;
+    border: 1px solid #304563;
+    color: #e7edf7;
+    outline: none;
+}
+
+QListWidget#exportTrackList::item {
+    min-height: 32px;
+    padding: 3px 7px;
+}
+
+QListWidget#exportTrackList::item:selected {
+    background-color: #1b477c;
+    color: #ffffff;
+}
+
+QListWidget#folderExplorer {
+    background-color: transparent;
+    border: none;
+    color: #e7edf7;
+    outline: none;
+}
+
+QListWidget#folderExplorer::item {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: #e7edf7;
+    margin: 4px;
+    padding: 8px;
+}
+
+QListWidget#folderExplorer::item:hover {
+    background-color: #17243b;
+    border-color: #2d4669;
+}
+
+QListWidget#folderExplorer::item:selected {
+    background-color: #1b477c;
+    border-color: #438df5;
+    color: #ffffff;
+}
+
+QTabWidget#donationTabs::pane,
+QTabWidget#settingsTabs::pane {
+    background-color: #0b1424;
+    border: 1px solid #304563;
+}
+
+QTabWidget#donationTabs QTabBar::tab,
+QTabWidget#settingsTabs QTabBar::tab {
+    background-color: #111c30;
+    border: 1px solid #304563;
+    color: #aebed4;
+    min-width: 105px;
+    padding: 8px 10px;
+}
+
+QTabWidget#donationTabs QTabBar::tab:selected,
+QTabWidget#settingsTabs QTabBar::tab:selected {
+    background-color: #1b477c;
+    color: #ffffff;
+}
+
+QLabel#donationQr {
+    background-color: #ffffff;
+    border: 1px solid #304563;
+}
+
+QLabel#donationMethodTitle {
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 4px;
+}
+
+QLabel#donationData {
+    background-color: #121d31;
+    border: 1px solid #304563;
+    color: #dce7f7;
+    padding: 7px;
+}
+
+QLabel#donationWarning {
+    background-color: #121d31;
+    border: 1px solid #3b5478;
+    color: #e7edf7;
+    padding: 8px;
+}
+
+QLineEdit#donationAddress {
+    background-color: #08101d;
+    border: 1px solid #304563;
+    color: #dce7f7;
+    min-height: 34px;
+    padding: 0 8px;
+}
+
+QDialog#donationDialog QPushButton#donationPrimaryButton,
+QDialog#donationDialog QPushButton#donationSecondaryButton {
+    border-radius: 6px;
+    color: #ffffff;
+    font-weight: 700;
+    min-height: 40px;
+    padding: 0 18px;
+}
+
+QDialog#donationDialog QPushButton#donationPrimaryButton {
+    background-color: #176fe5;
+    border: 1px solid #3b8cff;
+}
+
+QDialog#donationDialog QPushButton#donationPrimaryButton:hover {
+    background-color: #237ff0;
+    border-color: #69a8ff;
+}
+
+QDialog#donationDialog QPushButton#donationSecondaryButton {
+    background-color: #17243a;
+    border: 1px solid #3a5275;
+}
+
+QDialog#donationDialog QPushButton#donationSecondaryButton:hover {
+    background-color: #20314d;
+    border-color: #4b9aff;
 }
 
 QFrame#sidebar {
@@ -432,7 +642,8 @@ QLabel#albumCardArtist {
 
 QLineEdit#librarySearch,
 QLineEdit#trackSearch,
-QLineEdit#collectionSearch {
+QLineEdit#collectionSearch,
+QLineEdit#folderSearch {
     background-color: #111c30;
     border: 1px solid #304563;
     border-radius: 9px;
@@ -445,7 +656,8 @@ QLineEdit#collectionSearch {
 
 QLineEdit#librarySearch:focus,
 QLineEdit#trackSearch:focus,
-QLineEdit#collectionSearch:focus {
+QLineEdit#collectionSearch:focus,
+QLineEdit#folderSearch:focus {
     border-color: #2583ff;
 }
 
@@ -453,6 +665,19 @@ QLineEdit#trackSearch,
 QLineEdit#collectionSearch {
     font-size: 12px;
     min-height: 32px;
+}
+
+QLineEdit#folderSearch QToolButton {
+    background-color: transparent;
+    border: none;
+    color: #aebed4;
+    margin: 0;
+    padding: 0;
+}
+
+QLineEdit#folderSearch QToolButton:hover {
+    background-color: #1b2a43;
+    border: none;
 }
 
 QMenu {
@@ -820,6 +1045,33 @@ QPushButton#playerButton:hover {
     color: #ffffff;
 }
 
+QPushButton#playerButton:checked {
+    background-color: #1b477c;
+    border-color: #4b9aff;
+    color: #ffffff;
+}
+
+QPushButton#modeButton {
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    min-height: 26px;
+    max-height: 26px;
+    min-width: 26px;
+    max-width: 26px;
+    padding: 0;
+}
+
+QPushButton#modeButton:hover {
+    background-color: #17243a;
+    border-color: #304563;
+}
+
+QPushButton#modeButton[modeActive="true"] {
+    background-color: #17345b;
+    border-color: #315f96;
+}
+
 QPushButton#playerButton:disabled {
     color: #536177;
 }
@@ -845,6 +1097,11 @@ QPushButton#playButton:disabled {
     color: #697991;
 }
 
+QFrame#trackPanel:hover {
+    background-color: #111f35;
+    border-color: #3b82f6;
+}
+
 QSlider::groove:horizontal {
     background: #2a3a54;
     border-radius: 2px;
@@ -865,3 +1122,44 @@ QSlider::handle:horizontal {
     width: 12px;
 }
 """
+
+
+THEME_PALETTES = {
+    "vinqelo": {},
+    "clementine": {
+        "#176fe5": "#d97706", "#3186f4": "#f59e0b", "#2583ff": "#f59e0b",
+        "#0e5fcf": "#b45309", "#3b82f6": "#f59e0b", "#4b9aff": "#fbbf24",
+        "#438df5": "#f59e0b", "#1b477c": "#704214",
+        "#0a1020": "#12100d", "#10192b": "#1b1712", "#111c30": "#211b14",
+    },
+    "amarok": {
+        "#176fe5": "#7c3aed", "#3186f4": "#9b6cff", "#2583ff": "#8b5cf6",
+        "#0e5fcf": "#6d28d9", "#3b82f6": "#8b5cf6", "#4b9aff": "#a78bfa",
+        "#438df5": "#9b6cff", "#1b477c": "#4c2d78",
+        "#0a1020": "#100d18", "#10192b": "#171223", "#111c30": "#20172f",
+    },
+    "emerald": {
+        "#176fe5": "#059669", "#3186f4": "#10b981", "#2583ff": "#10b981",
+        "#0e5fcf": "#047857", "#3b82f6": "#10b981", "#4b9aff": "#34d399",
+        "#438df5": "#10b981", "#1b477c": "#145c49",
+    },
+    "graphite": {
+        "#176fe5": "#64748b", "#3186f4": "#94a3b8", "#2583ff": "#94a3b8",
+        "#0e5fcf": "#475569", "#3b82f6": "#94a3b8", "#4b9aff": "#cbd5e1",
+        "#438df5": "#94a3b8", "#1b477c": "#3b4b60",
+    },
+}
+
+
+def build_stylesheet(theme: str = "vinqelo", font_size: int = 13) -> str:
+    stylesheet = APP_STYLESHEET
+    for source, target in THEME_PALETTES.get(theme, {}).items():
+        stylesheet = stylesheet.replace(source, target)
+    delta = max(11, min(17, int(font_size))) - 13
+    if delta:
+        stylesheet = re.sub(
+            r"font-size:\s*(\d+)px",
+            lambda match: f"font-size: {max(8, int(match.group(1)) + delta)}px",
+            stylesheet,
+        )
+    return stylesheet

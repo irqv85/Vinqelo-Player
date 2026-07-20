@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtCore import QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QListView, QListWidget, QListWidgetItem,
+    QAbstractItemView, QFrame, QHBoxLayout, QLabel, QListView, QListWidget, QListWidgetItem,
     QLineEdit, QMenu, QMessageBox, QPushButton, QStackedWidget, QTreeWidget, QTreeWidgetItem,
     QVBoxLayout, QWidget,
 )
@@ -31,6 +31,7 @@ class AlbumGridPage(QWidget):
     enqueue_requested = Signal(object)
     playlist_requested = Signal(object)
     manual_cover_selected = Signal(int, bytes)
+    classification_changed = Signal()
 
     def __init__(self, database: DatabaseManager, *, compilations: bool = False) -> None:
         super().__init__()
@@ -57,6 +58,7 @@ class AlbumGridPage(QWidget):
         grid_layout.setContentsMargins(0, 0, 0, 0)
         grid_layout.setSpacing(10)
         self.collection_search = QLineEdit()
+        self.collection_search.setClearButtonEnabled(True)
         self.collection_search.setObjectName("collectionSearch")
         collection_name = "compilaciones" if compilations else "álbumes"
         self.collection_search.setPlaceholderText(f"Buscar {collection_name}…")
@@ -64,7 +66,15 @@ class AlbumGridPage(QWidget):
             navigation_icon("search", "#8fa7c7"),
             QLineEdit.ActionPosition.LeadingPosition,
         )
-        self.collection_search.textChanged.connect(self._filter_collections)
+        self._collection_filter_timer = QTimer(self)
+        self._collection_filter_timer.setSingleShot(True)
+        self._collection_filter_timer.setInterval(420)
+        self._collection_filter_timer.timeout.connect(
+            lambda: self._filter_collections(self.collection_search.text())
+        )
+        self.collection_search.textChanged.connect(
+            lambda _text: self._collection_filter_timer.start()
+        )
         grid_layout.addWidget(self.collection_search)
 
         self.grid = QListWidget()
@@ -75,7 +85,7 @@ class AlbumGridPage(QWidget):
         self.grid.setWrapping(True)
         self.grid.setSpacing(10)
         self.grid.setGridSize(QSize(180, 238))
-        self.grid.itemClicked.connect(self._open_album)
+        self.grid.itemDoubleClicked.connect(self._open_album)
         self.grid.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.grid.customContextMenuRequested.connect(self._album_context_menu)
         grid_layout.addWidget(self.grid, 1)
@@ -103,13 +113,22 @@ class AlbumGridPage(QWidget):
         header.addWidget(play)
         detail_layout.addLayout(header)
         self.track_search = QLineEdit()
+        self.track_search.setClearButtonEnabled(True)
         self.track_search.setObjectName("trackSearch")
         self.track_search.setPlaceholderText("Buscar dentro de este álbum…")
         self.track_search.addAction(
             navigation_icon("search", "#8fa7c7"),
             QLineEdit.ActionPosition.LeadingPosition,
         )
-        self.track_search.textChanged.connect(self._filter_tracks)
+        self._track_filter_timer = QTimer(self)
+        self._track_filter_timer.setSingleShot(True)
+        self._track_filter_timer.setInterval(420)
+        self._track_filter_timer.timeout.connect(
+            lambda: self._filter_tracks(self.track_search.text())
+        )
+        self.track_search.textChanged.connect(
+            lambda _text: self._track_filter_timer.start()
+        )
         detail_layout.addWidget(self.track_search)
         self.tracks = QTreeWidget()
         self.tracks.setHeaderLabels(["#", "TÍTULO", "ARTISTA", "DURACIÓN", "TIPO"])
@@ -192,6 +211,12 @@ class AlbumGridPage(QWidget):
         online = menu.addAction("Buscar carátula en internet…")
         choose = menu.addAction("Buscar una carátula en el equipo…")
         preview = menu.addAction("Ver carátula en grande")
+        menu.addSeparator()
+        classification = menu.addAction(
+            "Marcar como álbum normal"
+            if bool(album["is_compilation"])
+            else "Marcar como compilación"
+        )
         selected = menu.exec(self.grid.viewport().mapToGlobal(position))
         widget = self.grid.itemWidget(item)
         cover = widget.findChild(QLabel, "albumCardCover") if widget else None
@@ -228,6 +253,11 @@ class AlbumGridPage(QWidget):
                 return
             self.update_album_cover(album_id, data)
             self.manual_cover_selected.emit(album_id, data)
+        elif selected == classification:
+            make_compilation = not bool(album["is_compilation"])
+            self.database.set_album_compilation(album_id, make_compilation)
+            self.refresh()
+            self.classification_changed.emit()
 
     @staticmethod
     def _scaled_cover(pixmap: QPixmap) -> QPixmap:
@@ -329,7 +359,17 @@ class AlbumGridPage(QWidget):
             payload = track.data(0, Qt.ItemDataRole.UserRole)
             if payload.get("context", {}).get("file_path") == file_path:
                 self.tracks.setCurrentItem(track)
-                self.tracks.scrollToItem(track)
+                self.tracks.scrollToItem(
+                    track,
+                    QAbstractItemView.ScrollHint.PositionAtCenter,
+                )
+                QTimer.singleShot(
+                    0,
+                    lambda active=track: self.tracks.scrollToItem(
+                        active,
+                        QAbstractItemView.ScrollHint.PositionAtCenter,
+                    ),
+                )
                 break
         return True
 

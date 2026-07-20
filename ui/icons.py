@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath, QPen, QPixmap
 
 
 def navigation_icon(kind: str, color: str = "#8fa7c7") -> QIcon:
@@ -95,9 +95,71 @@ def navigation_icon(kind: str, color: str = "#8fa7c7") -> QIcon:
         painter.drawEllipse(QRectF(4, 4, 16, 16))
         painter.drawLine(QPointF(12, 10.5), QPointF(12, 17))
         painter.drawPoint(QPointF(12, 7.5))
+    elif kind == "settings":
+        font = QFont("Segoe MDL2 Assets")
+        font.setPixelSize(16)
+        painter.setFont(font)
+        painter.setPen(QColor(color))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawText(
+            QRectF(0, 0, size, size),
+            Qt.AlignmentFlag.AlignCenter,
+            "\ue713",  # Icono oficial de Configuración de Windows.
+        )
     else:
         painter.drawEllipse(QRectF(5, 5, 14, 14))
 
+    painter.end()
+    return QIcon(pixmap)
+
+
+def library_folder_icon(accent: str = "#438df5", size: int = 64) -> QIcon:
+    """Carpeta musical acorde a las tarjetas oscuras de Vinqelo."""
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+    scale = size / 64.0
+    painter.scale(scale, scale)
+    accent_color = QColor(accent)
+    back_color = accent_color.darker(235)
+    front_color = accent_color.darker(175)
+
+    back = QPainterPath()
+    back.moveTo(7, 17)
+    back.lineTo(24, 17)
+    back.cubicTo(26, 17, 28, 18, 30, 21)
+    back.lineTo(34, 24)
+    back.lineTo(57, 24)
+    back.lineTo(57, 51)
+    back.lineTo(7, 51)
+    back.closeSubpath()
+    painter.setPen(QPen(accent_color.darker(125), 1.5))
+    painter.setBrush(back_color)
+    painter.drawPath(back)
+
+    front = QPainterPath()
+    front.moveTo(6, 27)
+    front.quadTo(6, 24, 10, 24)
+    front.lineTo(58, 24)
+    front.lineTo(52, 53)
+    front.quadTo(51, 56, 47, 56)
+    front.lineTo(10, 56)
+    front.quadTo(6, 55, 6, 51)
+    front.closeSubpath()
+    painter.setPen(QPen(accent_color, 1.7))
+    painter.setBrush(front_color)
+    painter.drawPath(front)
+
+    # Nota musical sencilla que identifica estas carpetas como música.
+    painter.setPen(QPen(QColor("#e8f1ff"), 2.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+    painter.setBrush(QColor("#e8f1ff"))
+    painter.drawLine(QPointF(36, 34), QPointF(36, 47))
+    painter.drawLine(QPointF(36, 34), QPointF(45, 32))
+    painter.drawLine(QPointF(45, 32), QPointF(45, 44))
+    painter.drawEllipse(QRectF(30, 44, 7, 5))
+    painter.drawEllipse(QRectF(39, 41, 7, 5))
     painter.end()
     return QIcon(pixmap)
 
@@ -125,6 +187,38 @@ def transport_icon(kind: str, color: str = "#e7edf7", size: int = 24) -> QIcon:
         painter.drawLine(QPointF(6, 6), QPointF(6, 18)); path = QPainterPath(); path.moveTo(18, 6); path.lineTo(8, 12); path.lineTo(18, 18); path.closeSubpath(); painter.drawPath(path)
     elif kind == "next":
         painter.drawLine(QPointF(18, 6), QPointF(18, 18)); path = QPainterPath(); path.moveTo(6, 6); path.lineTo(16, 12); path.lineTo(6, 18); path.closeSubpath(); painter.drawPath(path)
+    elif kind in {"repeat_one", "repeat_all", "repeat_album", "repeat_artist"}:
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawArc(QRectF(4, 6, 16, 11), 25 * 16, 145 * 16)
+        painter.drawArc(QRectF(4, 7, 16, 11), 205 * 16, 145 * 16)
+        painter.drawLine(QPointF(18, 5), QPointF(20, 8))
+        painter.drawLine(QPointF(20, 8), QPointF(16.5, 8))
+        painter.drawLine(QPointF(6, 19), QPointF(4, 16))
+        painter.drawLine(QPointF(4, 16), QPointF(7.5, 16))
+        if kind == "repeat_one":
+            painter.drawText(QRectF(8, 7, 8, 10), Qt.AlignmentFlag.AlignCenter, "1")
+        elif kind in {"repeat_album", "repeat_artist"}:
+            painter.drawText(
+                QRectF(7, 7, 10, 10), Qt.AlignmentFlag.AlignCenter,
+                "D" if kind == "repeat_album" else "A",
+            )
+    elif kind.startswith("shuffle"):
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawLine(QPointF(4, 7), QPointF(8, 7))
+        painter.drawLine(QPointF(8, 7), QPointF(16, 17))
+        painter.drawLine(QPointF(16, 17), QPointF(20, 17))
+        painter.drawLine(QPointF(17, 14), QPointF(20, 17))
+        painter.drawLine(QPointF(20, 17), QPointF(17, 20))
+        painter.drawLine(QPointF(4, 17), QPointF(8, 17))
+        painter.drawLine(QPointF(8, 17), QPointF(16, 7))
+        painter.drawLine(QPointF(16, 7), QPointF(20, 7))
+        painter.drawLine(QPointF(17, 4), QPointF(20, 7))
+        painter.drawLine(QPointF(20, 7), QPointF(17, 10))
+        if kind != "shuffle":
+            badge = {"shuffle_album": "D", "shuffle_artist": "A", "shuffle_global": "G"}.get(kind, "")
+            painter.setBrush(QColor("#10192b"))
+            painter.drawEllipse(QRectF(12, 11, 10, 10))
+            painter.drawText(QRectF(12, 11, 10, 10), Qt.AlignmentFlag.AlignCenter, badge)
     painter.end()
     return QIcon(pixmap)
 

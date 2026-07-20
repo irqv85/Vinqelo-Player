@@ -22,6 +22,7 @@ from database.manager import DatabaseManager
 from ui.pages.collection_pages import (
     _play_payload, _queue, _total_duration, mark_playing_track,
 )
+from ui.playlist_export import PlaylistExportController
 
 
 class PlaylistsPage(QWidget):
@@ -33,6 +34,7 @@ class PlaylistsPage(QWidget):
         self.database = database
         self._playlist_id: int | None = None
         self._playing_file = ""
+        self._exporter = PlaylistExportController(self)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 22, 28, 22)
@@ -59,8 +61,15 @@ class PlaylistsPage(QWidget):
         left.addWidget(self.playlists, 1)
 
         right = QVBoxLayout()
+        heading = QHBoxLayout()
         self.list_title = QLabel("Selecciona o crea una lista")
         self.list_title.setObjectName("sectionTitle")
+        self.export_button = QPushButton("Exportar")
+        self.export_button.setObjectName("primaryButton")
+        self.export_button.setEnabled(False)
+        self.export_button.clicked.connect(self._export_playlist)
+        heading.addWidget(self.list_title, 1)
+        heading.addWidget(self.export_button)
         self.tracks = QTreeWidget()
         self.tracks.setHeaderLabels(["#", "TÍTULO", "ARTISTA", "ÁLBUM", "DURACIÓN"])
         self.tracks.setRootIsDecorated(False)
@@ -72,7 +81,7 @@ class PlaylistsPage(QWidget):
         self.tracks.itemDoubleClicked.connect(self._play)
         self.tracks.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tracks.customContextMenuRequested.connect(self._track_menu)
-        right.addWidget(self.list_title)
+        right.addLayout(heading)
         right.addWidget(self.tracks, 1)
 
         body.addLayout(left, 0)
@@ -121,6 +130,7 @@ class PlaylistsPage(QWidget):
             self.playlists.setCurrentRow(0)
         else:
             self._playlist_id = None
+            self.export_button.setEnabled(False)
             self.tracks.clear()
             self.list_title.setText("Selecciona o crea una lista")
 
@@ -128,7 +138,15 @@ class PlaylistsPage(QWidget):
         self._playlist_id = (
             int(current.data(Qt.ItemDataRole.UserRole)) if current is not None else None
         )
+        self.export_button.setEnabled(self._playlist_id is not None)
         self._load_tracks()
+
+    def _export_playlist(self) -> None:
+        if self._playlist_id is None:
+            return
+        item = self.playlists.currentItem()
+        name = str(item.data(Qt.ItemDataRole.UserRole + 1)) if item else "Playlist"
+        self._exporter.start(name, self.database.get_playlist_tracks(self._playlist_id))
 
     def _load_tracks(self) -> None:
         self.tracks.clear()
@@ -189,8 +207,13 @@ class PlaylistsPage(QWidget):
             return
         self.playlists.setCurrentItem(item)
         menu = QMenu(self)
+        export = menu.addAction("Exportar como compilacion...")
+        menu.addSeparator()
         delete = menu.addAction("Eliminar lista")
-        if menu.exec(self.playlists.viewport().mapToGlobal(position)) == delete:
+        selected = menu.exec(self.playlists.viewport().mapToGlobal(position))
+        if selected == export:
+            self._export_playlist()
+        elif selected == delete:
             name = str(item.data(Qt.ItemDataRole.UserRole + 1))
             answer = QMessageBox.question(
                 self, "Eliminar lista", f'¿Eliminar la lista “{name}”?'

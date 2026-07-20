@@ -23,12 +23,14 @@ from config import (
     ASSETS_DIR,
     LICENSE_PATH,
 )
+from ui.donation_dialog import DonationDialog
+from ui.i18n import translate_text
 
 
 class AboutDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.setWindowTitle(f"Acerca de {APP_NAME}")
+        self.setWindowTitle(f"{translate_text('Acerca de')} {APP_NAME}")
         self.setModal(True)
         self.setMinimumWidth(440)
 
@@ -52,7 +54,7 @@ class AboutDialog(QDialog):
         identity = QVBoxLayout()
         name = QLabel(APP_NAME)
         name.setObjectName("pageTitle")
-        version = QLabel(f"Versión {APP_VERSION}")
+        version = QLabel(f"{translate_text('Versión')} {APP_VERSION}")
         version.setObjectName("pageSubtitle")
         identity.addStretch(1)
         identity.addWidget(name)
@@ -63,11 +65,11 @@ class AboutDialog(QDialog):
         layout.addLayout(heading)
 
         details = QLabel(
-            f"Desarrollado por <b>{APP_AUTHOR}</b><br>"
+            f"{translate_text('Desarrollado por')} <b>{APP_AUTHOR}</b><br>"
             f"{APP_AUTHOR_EMAIL}<br><br>"
-            f"Licencia: <b>{APP_LICENSE}</b><br>"
+            f"{translate_text('Licencia')}: <b>{APP_LICENSE}</b><br>"
             f"Copyright © 2026 {APP_AUTHOR}.<br><br>"
-            "Software libre, distribuido sin garantía, conforme a los términos de la licencia."
+            f"{translate_text('Software libre, distribuido sin garantía, conforme a los términos de la licencia.')}"
         )
         details.setTextFormat(Qt.TextFormat.RichText)
         details.setWordWrap(True)
@@ -82,28 +84,36 @@ class AboutDialog(QDialog):
         layout.addWidget(self.license_text)
 
         buttons = QHBoxLayout()
+        support_button = QPushButton("Apoyar Vinqelo")
+        support_button.setObjectName("primaryButton")
+        support_button.clicked.connect(self._show_donations)
         self.license_button = QPushButton("Ver licencia completa")
         self.license_button.setObjectName("secondaryButton")
         self.license_button.clicked.connect(self._toggle_license)
         close_button = QPushButton("Cerrar")
         close_button.setObjectName("primaryButton")
         close_button.clicked.connect(self.accept)
+        buttons.addWidget(support_button)
         buttons.addWidget(self.license_button)
         buttons.addStretch(1)
         buttons.addWidget(close_button)
         layout.addLayout(buttons)
+
+    def _show_donations(self) -> None:
+        DonationDialog(self).exec()
 
     @staticmethod
     def _read_license() -> str:
         try:
             return LICENSE_PATH.read_text(encoding="utf-8")
         except OSError:
-            return "GNU General Public License, versión 3.0."
+            return translate_text("GNU General Public License, versión 3.0.")
 
     def _toggle_license(self) -> None:
         visible = not self.license_text.isVisible()
         self.license_text.setVisible(visible)
         self.license_button.setText(
-            "Ocultar licencia" if visible else "Ver licencia completa"
+            translate_text("Ocultar licencia") if visible
+            else translate_text("Ver licencia completa")
         )
         self.adjustSize()

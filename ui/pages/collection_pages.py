@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QRectF, QSize, QTimer, Qt, Signal
+from PySide6.QtCore import QPoint, QRectF, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QIcon, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -88,14 +89,16 @@ def _play_payload(
 
 
 def _track_item(row: object, *, folder_columns: bool = False) -> QTreeWidgetItem:
+    file_path = Path(str(row["file_path"]))
+    short_location = f"{file_path.parent.name} / {file_path.name}"
     if folder_columns:
-        values = [row["title"], row["file_path"], row["file_format"], _duration(row["duration"]), ""]
+        values = [row["title"], short_location, row["file_format"], _duration(row["duration"]), ""]
     else:
         values = [str(row["track_number"] or ""), row["title"], row["track_artist"], _duration(row["duration"]), row["file_format"]]
     item = QTreeWidgetItem(values)
     item.setData(0, Qt.ItemDataRole.UserRole, _queue([row]))
     item.setData(0, Qt.ItemDataRole.UserRole + 1, _queue([row])[0])
-    item.setToolTip(1, row["file_path"])
+    item.setToolTip(1, short_location)
     return item
 
 
@@ -199,6 +202,7 @@ class ArtistsPage(QWidget):
     album_cover_ready = Signal(int, bytes)
     artwork_changed = Signal()
     primary_artist_changed = Signal(str, bytes)
+    classification_changed = Signal()
 
     def __init__(self, database: DatabaseManager) -> None:
         super().__init__()
@@ -235,13 +239,22 @@ class ArtistsPage(QWidget):
         artist_root_layout.setContentsMargins(0, 0, 0, 0)
         artist_root_layout.setSpacing(10)
         self.artist_search = QLineEdit()
+        self.artist_search.setClearButtonEnabled(True)
         self.artist_search.setObjectName("collectionSearch")
         self.artist_search.setPlaceholderText("Buscar artistas…")
         self.artist_search.addAction(
             navigation_icon("search", "#8fa7c7"),
             QLineEdit.ActionPosition.LeadingPosition,
         )
-        self.artist_search.textChanged.connect(self._filter_artists)
+        self._artist_filter_timer = QTimer(self)
+        self._artist_filter_timer.setSingleShot(True)
+        self._artist_filter_timer.setInterval(420)
+        self._artist_filter_timer.timeout.connect(
+            lambda: self._filter_artists(self.artist_search.text())
+        )
+        self.artist_search.textChanged.connect(
+            lambda _text: self._artist_filter_timer.start()
+        )
         artist_root_layout.addWidget(self.artist_search)
 
         self.artist_grid = QListWidget()
@@ -253,7 +266,7 @@ class ArtistsPage(QWidget):
         self.artist_grid.setSpacing(14)
         self.artist_grid.setIconSize(QSize(126, 126))
         self.artist_grid.setGridSize(QSize(166, 176))
-        self.artist_grid.itemClicked.connect(self._open_artist)
+        self.artist_grid.itemDoubleClicked.connect(self._open_artist)
         self.artist_grid.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.artist_grid.customContextMenuRequested.connect(self._artist_context_menu)
         artist_root_layout.addWidget(self.artist_grid, 1)
@@ -279,6 +292,7 @@ class ArtistsPage(QWidget):
         self.tracks_label = QLabel("ÁLBUMES Y PISTAS")
         self.tracks_label.setObjectName("columnHeader")
         self.track_search = QLineEdit()
+        self.track_search.setClearButtonEnabled(True)
         self.track_search.setObjectName("trackSearch")
         self.track_search.setPlaceholderText("Buscar álbum o pista de este artista…")
         self.track_search.addAction(
@@ -286,7 +300,15 @@ class ArtistsPage(QWidget):
             QLineEdit.ActionPosition.LeadingPosition,
         )
         self.track_search.setMaximumWidth(360)
-        self.track_search.textChanged.connect(self._filter_tracks)
+        self._track_filter_timer = QTimer(self)
+        self._track_filter_timer.setSingleShot(True)
+        self._track_filter_timer.setInterval(420)
+        self._track_filter_timer.timeout.connect(
+            lambda: self._filter_tracks(self.track_search.text())
+        )
+        self.track_search.textChanged.connect(
+            lambda _text: self._track_filter_timer.start()
+        )
         track_filter_row.addWidget(self.tracks_label)
         track_filter_row.addStretch(1)
         track_filter_row.addWidget(self.track_search)
@@ -488,6 +510,7 @@ class ArtistsPage(QWidget):
         self.artist_grid.setCurrentItem(item)
         menu = QMenu(self)
         play_all = menu.addAction("Reproducir todos los álbumes")
+        mark_compilation = menu.addAction("Marcar como compilación")
         menu.addSeparator()
         online = menu.addAction("Buscar foto en internet…")
         choose = menu.addAction("Buscar una foto en el equipo…")
@@ -500,6 +523,17 @@ class ArtistsPage(QWidget):
                 self.play_requested.emit(
                     _play_payload(tracks, context={"artist_id": artist_id})
                 )
+        elif selected == mark_compilation:
+            artist_id = int(item.data(Qt.ItemDataRole.UserRole))
+            answer = QMessageBox.question(
+                self,
+                "Marcar como compilación",
+                f'¿Mover todos los álbumes de “{artist_name}” a Compilaciones?',
+            )
+            if answer == QMessageBox.StandardButton.Yes:
+                self.database.set_artist_compilation(artist_id, True)
+                self.refresh()
+                self.classification_changed.emit()
         elif selected == preview:
             data = read_image(manual_artist_image_path(artist_name))
             pixmap = QPixmap()
@@ -638,6 +672,7 @@ class ArtistsPage(QWidget):
                 item.setIcon(QIcon(pixmap))
 
     def _open_artist(self, item: QListWidgetItem) -> None:
+        self.track_search.clear()
         artist_id = int(item.data(Qt.ItemDataRole.UserRole))
         artist_name = str(item.data(Qt.ItemDataRole.UserRole + 2) or item.text())
         self._current_artist_id = artist_id
@@ -684,6 +719,7 @@ class ArtistsPage(QWidget):
         self.album_scroll.verticalScrollBar().setValue(0)
         if self._playing_file:
             self.set_playing_file(self._playing_file)
+            self._center_visible_track(self._playing_file)
 
     def open_artist(self, artist_id: int) -> bool:
         item = next(
@@ -984,6 +1020,12 @@ class ArtistsPage(QWidget):
     def locate(self, artist_id: int, album_id: int | None, file_path: str) -> bool:
         if not self.open_artist(artist_id):
             return False
+        return self._center_visible_track(file_path, album_id)
+
+    def _center_visible_track(
+        self, file_path: str, album_id: int | None = None
+    ) -> bool:
+        """Centra la fila activa cuando el diseño de álbumes ya está calculado."""
         trees = (
             [(album_id, self._album_track_trees.get(album_id))]
             if album_id is not None
@@ -999,12 +1041,33 @@ class ArtistsPage(QWidget):
                 if context.get("file_path") != file_path:
                     continue
                 tree.setCurrentItem(track_item)
-                tree.scrollToItem(track_item)
-                section = self._album_sections.get(int(active_album_id))
-                if section is not None:
-                    self.album_scroll.ensureWidgetVisible(section, 0, 24)
+                def center(
+                    active_tree: QTreeWidget = tree,
+                    active_item: QTreeWidgetItem = track_item,
+                    active_id: int = int(active_album_id),
+                ) -> None:
+                    try:
+                        active_tree.scrollToItem(
+                            active_item,
+                            QAbstractItemView.ScrollHint.PositionAtCenter,
+                        )
+                        section = self._album_sections.get(active_id)
+                        if section is not None:
+                            self.album_scroll.ensureWidgetVisible(section, 0, 0)
+                        item_rect = active_tree.visualItemRect(active_item)
+                        point = active_tree.viewport().mapTo(
+                            self.album_rows_container,
+                            QPoint(item_rect.center().x(), item_rect.center().y()),
+                        )
+                        bar = self.album_scroll.verticalScrollBar()
+                        target = point.y() - self.album_scroll.viewport().height() // 2
+                        bar.setValue(max(bar.minimum(), min(bar.maximum(), target)))
+                    except RuntimeError:
+                        pass
+
+                QTimer.singleShot(0, center)
                 return True
-        return True
+        return False
 
     def mark_playing(self, file_path: str) -> bool:
         marked = False

@@ -116,7 +116,7 @@ class LibraryPage(QWidget):
         self.top_artists.setObjectName("listeningArtists")
         self.top_artists.setIconSize(QSize(58, 58))
         self.top_artists.setSpacing(4)
-        self.top_artists.itemClicked.connect(self._open_top_artist)
+        self.top_artists.itemDoubleClicked.connect(self._open_top_artist)
         artist_layout.addWidget(self.top_artists, 1)
         dashboard.addWidget(artists_panel, 2)
 
@@ -141,7 +141,6 @@ class LibraryPage(QWidget):
         self._selection_label = QLabel("")
         self._selection_label.setObjectName("mutedLabel")
         layout.addWidget(self._selection_label)
-        self.refresh_stats()
 
     @staticmethod
     def _panel(title: str) -> QFrame:

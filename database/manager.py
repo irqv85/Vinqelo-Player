@@ -363,6 +363,49 @@ class DatabaseManager:
         )
         return rows[0] if rows else None
 
+    def set_album_compilation(self, album_id: int, is_compilation: bool) -> None:
+        """Cambia la clasificación sin alterar la carpeta ni sus pistas."""
+        connection = self.connect()
+        try:
+            cursor = connection.execute(
+                """UPDATE albums
+                   SET is_compilation=?,
+                       album_artist=CASE WHEN ?=1 THEN 'Varios artistas'
+                           ELSE COALESCE((SELECT name FROM artists
+                                          WHERE artists.id=albums.artist_id), album_artist)
+                       END
+                   WHERE id=?""",
+                (int(is_compilation), int(is_compilation), int(album_id)),
+            )
+            if not cursor.rowcount:
+                raise ValueError("El álbum no pertenece a la biblioteca.")
+            connection.commit()
+        finally:
+            connection.close()
+
+    def set_artist_compilation(self, artist_id: int, is_compilation: bool) -> int:
+        """Clasifica juntos todos los álbumes de la carpeta de un artista."""
+        connection = self.connect()
+        try:
+            cursor = connection.execute(
+                """UPDATE albums
+                   SET is_compilation=?,
+                       album_artist=CASE WHEN ?=1 THEN 'Varios artistas'
+                           ELSE COALESCE((SELECT name FROM artists
+                                          WHERE artists.id=albums.artist_id), album_artist)
+                       END
+                   WHERE artist_id=?""",
+                (int(is_compilation), int(is_compilation), int(artist_id)),
+            )
+            connection.commit()
+            return int(cursor.rowcount)
+        finally:
+            connection.close()
+
+    def get_artist_by_id(self, artist_id: int) -> sqlite3.Row | None:
+        rows = self.fetch_all("SELECT * FROM artists WHERE id=?", (int(artist_id),))
+        return rows[0] if rows else None
+
     def update_track_title(self, file_path: str, title: str) -> str:
         clean_title = " ".join(title.split()).strip()
         if not clean_title:
@@ -557,6 +600,25 @@ class DatabaseManager:
             (file_path,),
         )
         return rows[0] if rows else None
+
+    def get_tracks_by_paths(self, file_paths: list[str]) -> dict[str, sqlite3.Row]:
+        """Obtiene metadatos de una cola en lotes, sin una consulta por pista."""
+        result: dict[str, sqlite3.Row] = {}
+        for offset in range(0, len(file_paths), 700):
+            batch = file_paths[offset:offset + 700]
+            if not batch:
+                continue
+            placeholders = ",".join("?" for _ in batch)
+            rows = self.fetch_all(
+                f"""SELECT t.*, al.title AS album_title, al.artist_id,
+                    al.is_compilation, ar.name AS artist_name
+                    FROM tracks t JOIN albums al ON al.id=t.album_id
+                    LEFT JOIN artists ar ON ar.id=al.artist_id
+                    WHERE t.file_path IN ({placeholders})""",
+                tuple(batch),
+            )
+            result.update({str(row["file_path"]): row for row in rows})
+        return result
 
     def create_playlist(self, name: str) -> int:
         clean_name = " ".join(name.split()).strip()

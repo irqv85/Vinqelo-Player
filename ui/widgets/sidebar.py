@@ -122,6 +122,7 @@ class Sidebar(QFrame):
         button = self._buttons.get("now_playing")
         if button is not None:
             button.setEnabled(available)
+            button.setVisible(available)
 
     def is_selected(self, section: str) -> bool:
         button = self._buttons.get(section)

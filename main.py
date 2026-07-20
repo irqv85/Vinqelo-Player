@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 
+from PySide6.QtCore import QSettings
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -19,6 +21,25 @@ def main() -> int:
     app.setApplicationVersion(APP_VERSION)
     app.setWindowIcon(QIcon(str(ASSETS_DIR / "icons" / "vinqelo-v.png")))
     app.setStyle("Fusion")
+    from ui.scrolling import enable_smooth_scrolling
+
+    scroll_tuner = enable_smooth_scrolling(app)
+    app._vinqelo_scroll_tuner = scroll_tuner
+    startup_preferences = QSettings("Vinqelo", "Vinqelo Player")
+    from ui.i18n import detect_system_language, enable_translation
+
+    if startup_preferences.contains("interface/language"):
+        startup_language = str(
+            startup_preferences.value("interface/language", "es")
+        )
+    else:
+        startup_language = detect_system_language()
+        startup_preferences.setValue("interface/language", startup_language)
+
+    translation_manager = enable_translation(
+        app, startup_language
+    )
+    app._vinqelo_translation_manager = translation_manager
     startup = LoadingBanner(startup=True)
     startup.start(
         [
@@ -51,11 +72,27 @@ def main() -> int:
         startup.show_message("Casi listo…")
         app.processEvents()
         from ui.main_window import MainWindow
-        from ui.styles import APP_STYLESHEET
+        from ui.styles import build_stylesheet
+        from library.audio_formats import is_supported_audio
 
-        app.setStyleSheet(APP_STYLESHEET)
-        window = MainWindow(database)
+        preferences = QSettings("Vinqelo", "Vinqelo Player")
+        app.setStyleSheet(
+            build_stylesheet(
+                str(preferences.value("appearance/theme", "vinqelo")),
+                preferences.value("appearance/font_size", 13, type=int),
+            )
+        )
+        launch_files = [
+            path
+            for argument in sys.argv[1:]
+            if is_supported_audio(path := Path(argument))
+        ]
+        window = MainWindow(
+            database, confirm_initial_library=not bool(launch_files)
+        )
         window.show()
+        if launch_files:
+            window.open_audio_paths(launch_files)
         startup.stop()
         logger.info("Vinqelo Player iniciado")
         return app.exec()

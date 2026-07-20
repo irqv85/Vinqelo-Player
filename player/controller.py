@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import random
 import sys
 from dataclasses import replace
 from enum import Enum
@@ -48,6 +49,9 @@ class PlayerController(QObject):
         self._preamp_db = 0.0
         self._band_gains = [0.0] * 10
         self._ended_handled = False
+        self._repeat_mode = "off"
+        self._shuffle_enabled = False
+        self._unshuffled_queue: list[Path] = []
 
         try:
             if getattr(sys, "frozen", False):
@@ -119,9 +123,18 @@ class PlayerController(QObject):
             return False
 
         self.stop(clear_track=False)
-        self._queue = valid_paths
         self._folder_metadata = folder_metadata or {}
-        self._current_index = start_index
+        if self._shuffle_enabled:
+            selected = valid_paths[start_index]
+            upcoming = [path for index, path in enumerate(valid_paths) if index != start_index]
+            random.shuffle(upcoming)
+            self._unshuffled_queue = list(valid_paths)
+            self._queue = [selected, *upcoming]
+            self._current_index = 0
+        else:
+            self._queue = valid_paths
+            self._unshuffled_queue = []
+            self._current_index = start_index
         return self._load_current(autoplay=autoplay)
 
     def _load_current(self, *, autoplay: bool) -> bool:
@@ -137,18 +150,7 @@ class PlayerController(QObject):
             self._player.audio_set_volume(self._volume)
             self._ended_handled = False
 
-            details = read_track_details(path)
-            authoritative = self._folder_metadata.get(str(path))
-            if authoritative:
-                artist, album = authoritative
-                details = replace(
-                    details,
-                    artist=artist,
-                    album=album,
-                    album_artist=artist,
-                )
-            self.track_changed.emit(details.title, details.artist, str(path))
-            self.track_details_changed.emit(details)
+            self._emit_track_details(path)
             self.position_changed.emit(0, 0)
             self._emit_queue_navigation()
 
@@ -270,6 +272,41 @@ class PlayerController(QObject):
         except Exception:
             self._logger.warning("No se pudieron refrescar los metadatos de %s", path, exc_info=True)
 
+    def _emit_track_details(self, path: Path) -> None:
+        details = read_track_details(path)
+        authoritative = self._folder_metadata.get(str(path))
+        if authoritative:
+            artist, album = authoritative
+            details = replace(
+                details, artist=artist, album=album, album_artist=artist
+            )
+        self.track_changed.emit(details.title, details.artist, str(path))
+        self.track_details_changed.emit(details)
+
+    def set_repeat_mode(self, mode: str) -> None:
+        """Define repetición: ``off``, ``one`` o ``all`` (cola/carpeta)."""
+        self._repeat_mode = mode if mode in {"off", "one", "all"} else "off"
+        self._emit_queue_navigation()
+
+    def set_shuffle(self, enabled: bool) -> None:
+        enabled = bool(enabled)
+        if enabled == self._shuffle_enabled or not self._queue:
+            return
+        current = self.current_file
+        if enabled:
+            self._unshuffled_queue = list(self._queue)
+            upcoming = [path for index, path in enumerate(self._queue) if index != self._current_index]
+            random.shuffle(upcoming)
+            self._queue = ([current] if current is not None else []) + upcoming
+            self._current_index = 0 if current is not None else -1
+        else:
+            restored = list(self._unshuffled_queue)
+            self._queue = restored or self._queue
+            self._current_index = self._queue.index(current) if current in self._queue else 0
+            self._unshuffled_queue = []
+        self._shuffle_enabled = enabled
+        self._emit_queue_navigation()
+
     def replace_queue_paths(self, renamed: object, removed: object = None) -> None:
         if not isinstance(renamed, dict):
             return
@@ -311,16 +348,25 @@ class PlayerController(QObject):
     def previous(self) -> None:
         if self.current_file is None:
             return
-        if self._player.get_time() > 3000 or self._current_index <= 0:
+        if self._player.get_time() > 3000:
             self.seek_to(0)
             return
-        self._current_index -= 1
+        if self._current_index <= 0:
+            if self._repeat_mode != "all" or not self._queue:
+                self.seek_to(0)
+                return
+            self._current_index = len(self._queue) - 1
+        else:
+            self._current_index -= 1
         self._load_current(autoplay=True)
 
     def next(self) -> None:
         if self._current_index + 1 >= len(self._queue):
-            return
-        self._current_index += 1
+            if self._repeat_mode != "all" or not self._queue:
+                return
+            self._current_index = 0
+        else:
+            self._current_index += 1
         self._load_current(autoplay=True)
 
     def enqueue_files(
@@ -357,8 +403,13 @@ class PlayerController(QObject):
 
             if vlc_state == self._vlc.State.Ended and not self._ended_handled:
                 self._ended_handled = True
-                if self._current_index + 1 < len(self._queue):
+                if self._repeat_mode == "one":
+                    self._load_current(autoplay=True)
+                elif self._current_index + 1 < len(self._queue):
                     self.next()
+                elif self._repeat_mode == "all" and self._queue:
+                    self._current_index = 0
+                    self._load_current(autoplay=True)
                 else:
                     self._timer.stop()
                     self._set_state(PlaybackState.STOPPED)
@@ -390,8 +441,8 @@ class PlayerController(QObject):
 
     def _emit_queue_navigation(self) -> None:
         self.queue_navigation_changed.emit(
-            self._current_index > 0,
-            0 <= self._current_index < len(self._queue) - 1,
+            self._current_index > 0 or (self._repeat_mode == "all" and bool(self._queue)),
+            0 <= self._current_index < len(self._queue) - 1 or (self._repeat_mode == "all" and bool(self._queue)),
         )
         self.queue_changed.emit([str(path) for path in self._queue], self._current_index)
 

@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from config import ASSETS_DIR
+from ui.i18n import translate_text
 
 
 class LoadingBanner(QFrame):
@@ -66,9 +67,9 @@ class LoadingBanner(QFrame):
         copy.setSpacing(3)
         brand = QLabel("Vinqelo Player")
         brand.setObjectName("loadingBannerBrand")
-        caption = QLabel("TU MÚSICA, A TU MANERA")
+        caption = QLabel(translate_text("TU MÚSICA, A TU MANERA"))
         caption.setObjectName("loadingBannerCaption")
-        self.message = QLabel("Preparando el reproductor…")
+        self.message = QLabel(translate_text("Preparando el reproductor…"))
         self.message.setObjectName("loadingBannerMessage")
         self.message.setWordWrap(True)
         copy.addWidget(brand)
@@ -134,7 +135,7 @@ class LoadingBanner(QFrame):
         self.hide()
 
     def start(self, messages: Sequence[str]) -> None:
-        self._messages = [message for message in messages if message]
+        self._messages = [translate_text(message) for message in messages if message]
         self._message_index = 0
         if self._messages:
             self.message.setText(self._messages[0])
@@ -144,7 +145,7 @@ class LoadingBanner(QFrame):
         self._message_timer.start()
 
     def show_message(self, message: str) -> None:
-        self.message.setText(message)
+        self.message.setText(translate_text(message))
         self.center_banner()
         self.show()
         self.raise_()

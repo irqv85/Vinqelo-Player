@@ -10,7 +10,7 @@ from pathlib import Path
 APP_NAME = "Vinqelo Player"
 APP_VERSION = "0.7.0"
 APP_AUTHOR = "Irán Quintero"
-APP_AUTHOR_EMAIL = "iranquintero@gmail.com"
+APP_AUTHOR_EMAIL = "vinqeloapp@gmail.com"
 APP_LICENSE = "GNU General Public License v3.0"
 PROJECT_ROOT = Path(__file__).resolve().parent
 

@@ -12,6 +12,7 @@ from PySide6.QtCore import (
     QRectF,
     QSettings,
     QSize,
+    QStandardPaths,
     Signal,
     QThread,
     QTimer,
@@ -59,14 +60,18 @@ from player.windows_media_session import WindowsMediaSession
 from ui.effects_dialog import EffectsDialog
 from ui.about_dialog import AboutDialog
 from ui.loading_banner import LoadingBanner
-from ui.icons import window_control_icon
+from ui.icons import navigation_icon, window_control_icon
+from ui.i18n import translate_text
 from ui.pages.album_page import AlbumGridPage
-from ui.pages.collection_pages import ArtistsPage, FoldersPage
+from ui.pages.collection_pages import ArtistsPage
+from ui.pages.folders_page import FoldersPage
 from ui.pages.library_page import LibraryPage
 from ui.pages.playlists_page import PlaylistsPage
 from ui.pages.queue_page import QueuePage
 from ui.pages.search_page import SearchPage
 from ui.pages.smart_playlists_page import SmartPlaylistsPage
+from ui.settings_dialog import SettingsDialog
+from ui.styles import build_stylesheet
 from ui.widgets.player_bar import PlayerBar
 from ui.widgets.sidebar import Sidebar
 
@@ -75,7 +80,9 @@ class MainWindow(QMainWindow):
     RESIZE_MARGIN = 7
     media_action_requested = Signal(str)
 
-    def __init__(self, database: DatabaseManager) -> None:
+    def __init__(
+        self, database: DatabaseManager, *, confirm_initial_library: bool = True
+    ) -> None:
         super().__init__()
         self._logger = logging.getLogger(__name__)
         self._database = database
@@ -102,6 +109,8 @@ class MainWindow(QMainWindow):
         self._sync_timer.setInterval(1400)
         self._sync_timer.timeout.connect(self._start_library_sync)
         self._playback_context: dict[str, object] = {}
+        self._repeat_mode = "off"
+        self._shuffle_mode = "off"
         self._listening_file = ""
         self._listened_seconds = 0
         self._persisted_listen_seconds = 0
@@ -220,6 +229,8 @@ class MainWindow(QMainWindow):
         self.playlists_page.play_requested.connect(self._play_library_items)
         self.playlists_page.enqueue_requested.connect(self._enqueue_library_item)
         self.folders_page.metadata_changed.connect(self._handle_library_metadata_change)
+        for page in (self.artists_page, self.albums_page, self.compilations_page, self.folders_page):
+            page.classification_changed.connect(self._handle_classification_changed)
         self.artists_page.album_cover_ready.connect(self._handle_library_album_cover)
         self.artists_page.album_cover_ready.connect(self.albums_page.update_album_cover)
         self.artists_page.album_cover_ready.connect(self.compilations_page.update_album_cover)
@@ -238,6 +249,9 @@ class MainWindow(QMainWindow):
         self._cover_art.metadata_ready.connect(self._handle_online_metadata)
         self._initialize_player()
         self.show_section("library")
+        QTimer.singleShot(0, self._restore_last_track_location)
+        if confirm_initial_library:
+            QTimer.singleShot(700, self._confirm_initial_library)
 
         root.installEventFilter(self)
         for child in root.findChildren(QWidget):
@@ -248,27 +262,36 @@ class MainWindow(QMainWindow):
 
     def _create_window_controls(self, parent: QWidget) -> None:
         self.window_controls = QWidget(parent)
-        self.window_controls.setFixedSize(112, 30)
+        self.window_controls.setFixedSize(151, 34)
         controls_layout = QHBoxLayout(self.window_controls)
         controls_layout.setContentsMargins(0, 0, 0, 0)
         controls_layout.setSpacing(3)
 
+        self.settings_button = QPushButton()
         self.minimize_button = QPushButton()
         self.maximize_button = QPushButton()
         self.close_button = QPushButton()
-        for button in (self.minimize_button, self.maximize_button, self.close_button):
+        for button in (
+            self.settings_button,
+            self.minimize_button,
+            self.maximize_button,
+            self.close_button,
+        ):
             button.setProperty("windowControl", True)
-            button.setFixedSize(34, 28)
-            button.setIconSize(QSize(20, 20))
+            button.setFixedSize(34, 30)
+            button.setIconSize(QSize(18, 18))
             controls_layout.addWidget(button)
         self.close_button.setProperty("closeControl", True)
+        self.settings_button.setIcon(navigation_icon("settings", "#dce8f8"))
         self.minimize_button.setIcon(window_control_icon("minimize"))
         self.maximize_button.setIcon(window_control_icon("maximize"))
         self.close_button.setIcon(window_control_icon("close"))
 
+        self.settings_button.setToolTip("Configuración")
         self.minimize_button.setToolTip("Minimizar")
         self.maximize_button.setToolTip("Maximizar")
         self.close_button.setToolTip("Cerrar")
+        self.settings_button.clicked.connect(self._show_settings)
         self.minimize_button.clicked.connect(self.showMinimized)
         self.maximize_button.clicked.connect(self._toggle_maximized)
         self.close_button.clicked.connect(self.close)
@@ -293,6 +316,7 @@ class MainWindow(QMainWindow):
         controller.track_details_changed.connect(self._handle_track_details)
         controller.state_changed.connect(self.player_bar.set_playback_state)
         controller.state_changed.connect(self._handle_history_state)
+        controller.state_changed.connect(self._handle_now_playing_visibility)
         controller.position_changed.connect(self.player_bar.set_timing)
         controller.queue_navigation_changed.connect(self.player_bar.set_queue_navigation)
         controller.queue_changed.connect(self.queue_page.update_queue)
@@ -305,11 +329,42 @@ class MainWindow(QMainWindow):
         self.queue_page.play_index_requested.connect(controller.play_index)
         self.player_bar.seek_requested.connect(controller.seek_to)
         self.player_bar.effects_requested.connect(self._show_effects)
+        self.player_bar.repeat_mode_requested.connect(self._change_repeat_mode)
+        self.player_bar.shuffle_mode_requested.connect(self._change_shuffle_mode)
+        self.player_bar.now_playing_requested.connect(self._locate_now_playing)
         saved_volume = self._settings.value("player/volume", 70, type=int)
         self.player_bar.volume.setValue(max(0, min(100, saved_volume)))
         self.player_bar.volume_changed.connect(controller.set_volume)
         self.player_bar.volume_changed.connect(self._save_volume)
         controller.set_volume(self.player_bar.volume.value())
+
+    def _show_settings(self) -> None:
+        dialog = SettingsDialog(self)
+        dialog.settings_applied.connect(self._apply_settings)
+        dialog.exec()
+
+    def _apply_settings(self, values: object) -> None:
+        if not isinstance(values, dict):
+            return
+        application = QApplication.instance()
+        if application is not None:
+            application.setStyleSheet(
+                build_stylesheet(
+                    str(values.get("theme", "vinqelo")),
+                    int(values.get("font_size", 13)),
+                )
+            )
+            translation_manager = getattr(
+                application, "_vinqelo_translation_manager", None
+            )
+            if translation_manager is not None:
+                translation_manager.set_language(str(values.get("language", "es")))
+                self.player_bar.retranslate_dynamic()
+                # Las listas inteligentes generan sus títulos, contadores y
+                # estados vacíos después de construirse; se regeneran aquí con
+                # el idioma recién elegido.
+                self.smart_playlists_page.refresh()
+                self.folders_page.refresh()
 
     def _handle_track_details(self, details: TrackDetails) -> None:
         self.player_bar.set_track_details(details)
@@ -376,7 +431,9 @@ class MainWindow(QMainWindow):
             if section == "search":
                 self.search_page.focus_search()
             elif section == "library":
-                self.library_page.refresh_dashboard()
+                # Actualiza estadísticas y actividad una sola vez al entrar.
+                # LibraryPage ya no repite esta consulta durante su construcción.
+                self.library_page.refresh_stats()
 
     def update_library(self) -> None:
         if self._scan_thread is not None or self._sync_thread is not None:
@@ -408,6 +465,54 @@ class MainWindow(QMainWindow):
         self._pending_sync_roots.update(str(path) for path in available)
         self._start_library_sync()
 
+    def _confirm_initial_library(self) -> None:
+        """Confirma la carpeta Música una sola vez en una instalación nueva."""
+        if self._database.get_roots():
+            self._settings.setValue("library/initial_prompt_completed", True)
+            return
+        if self._settings.value(
+            "library/initial_prompt_completed", False, type=bool
+        ):
+            return
+
+        suggested_text = QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.MusicLocation
+        )
+        suggested = Path(suggested_text) if suggested_text else Path.home() / "Music"
+        dialog = QMessageBox(self)
+        dialog.setObjectName("initialLibraryDialog")
+        dialog.setIcon(QMessageBox.Icon.Question)
+        dialog.setWindowTitle(translate_text("Configurar biblioteca de música"))
+        dialog.setText(
+            translate_text(
+                "Windows indicó esta carpeta para tu música:\n\n"
+                "{path}\n\n¿Quieres usarla como biblioteca principal?"
+            ).format(path=suggested)
+        )
+        use_button = dialog.addButton(
+            translate_text("Usar esta carpeta"), QMessageBox.ButtonRole.AcceptRole
+        )
+        choose_button = dialog.addButton(
+            translate_text("Elegir otra carpeta"), QMessageBox.ButtonRole.ActionRole
+        )
+        later_button = dialog.addButton(
+            translate_text("Configurar después"), QMessageBox.ButtonRole.RejectRole
+        )
+        for button in (use_button, choose_button, later_button):
+            button.setObjectName("initialLibraryButton")
+            button.setMinimumWidth(0)
+        if not suggested.is_dir():
+            use_button.setEnabled(False)
+        dialog.exec()
+        self._settings.setValue("library/initial_prompt_completed", True)
+        clicked = dialog.clickedButton()
+        if clicked is use_button:
+            self._start_folder_import(suggested)
+        elif clicked is choose_button:
+            self.select_folder()
+        elif clicked is later_button:
+            return
+
     def select_folder(self) -> None:
         selected = QFileDialog.getExistingDirectory(
             self,
@@ -417,7 +522,9 @@ class MainWindow(QMainWindow):
         if not selected:
             return
 
-        folder_path = Path(selected)
+        self._start_folder_import(Path(selected))
+
+    def _start_folder_import(self, folder_path: Path) -> None:
         if not folder_path.exists() or not folder_path.is_dir():
             self._logger.warning("Se intentó seleccionar una carpeta inválida: %s", folder_path)
             QMessageBox.warning(self, "Carpeta no valida", "La carpeta seleccionada ya no existe.")
@@ -634,6 +741,16 @@ class MainWindow(QMainWindow):
                 self._playback_context["file_path"] = self._listening_file
             self._player_controller.replace_queue_paths(renamed)
 
+    def _handle_classification_changed(self) -> None:
+        """Actualiza las vistas afectadas sin volver a escanear los archivos."""
+        self.library_page.refresh_dashboard()
+        self._dirty_sections.update({"artists", "albums", "compilations", "folders"})
+        current = next(
+            (key for key, page in self._pages.items() if page is self.stack.currentWidget()),
+            "",
+        )
+        self._ensure_section_loaded(current)
+
     def _add_item_to_playlist(self, item: object) -> None:
         if not isinstance(item, dict):
             return
@@ -691,6 +808,24 @@ class MainWindow(QMainWindow):
             folder_metadata=metadata,
         )
 
+    def _change_repeat_mode(self, mode: str) -> None:
+        controller = self._player_controller
+        if controller is None:
+            return
+        self._repeat_mode = mode if mode in {"off", "one", "queue"} else "off"
+        controller.set_repeat_mode(
+            "one" if self._repeat_mode == "one"
+            else "all" if self._repeat_mode == "queue"
+            else "off"
+        )
+
+    def _change_shuffle_mode(self, mode: str) -> None:
+        controller = self._player_controller
+        if controller is None:
+            return
+        self._shuffle_mode = mode if mode in {"off", "queue"} else "off"
+        controller.set_shuffle(self._shuffle_mode == "queue")
+
     def _enqueue_library_item(self, item: object) -> None:
         if self._player_controller is None or not isinstance(item, dict):
             return
@@ -710,6 +845,8 @@ class MainWindow(QMainWindow):
         self._qualified_play_recorded = False
         row = self._database.get_track_context(file_path)
         if row is None:
+            self._playback_context = {"file_path": file_path}
+            self.sidebar.set_now_playing_available(True)
             return
         self._playback_context = {
             "file_path": file_path,
@@ -717,6 +854,7 @@ class MainWindow(QMainWindow):
             "artist_id": int(row["artist_id"]),
             "is_compilation": bool(row["is_compilation"]),
         }
+        self._settings.setValue("library/last_track", file_path)
         self.sidebar.set_now_playing_available(True)
         QTimer.singleShot(0, self._highlight_track_in_current_page)
 
@@ -727,7 +865,6 @@ class MainWindow(QMainWindow):
             or controller.state.value != "playing"
             or controller.current_file is None
             or str(controller.current_file) != self._listening_file
-            or self._qualified_play_recorded
         ):
             return
         self._listened_seconds += 1
@@ -757,6 +894,76 @@ class MainWindow(QMainWindow):
     def _handle_history_state(self, state: str) -> None:
         if state != "playing":
             self._flush_listening_time()
+
+    def _handle_now_playing_visibility(self, state: str) -> None:
+        active = state in {"playing", "paused"}
+        self.sidebar.set_now_playing_available(active)
+        if not active and self.sidebar.is_selected("now_playing"):
+            if self._playback_context.get("is_compilation"):
+                self.sidebar.select("compilations", emit_signal=False)
+            else:
+                self.sidebar.select("artists", emit_signal=False)
+
+    def _restore_last_track_location(self) -> None:
+        """Restaura ubicación y carga la última pista sin reproducirla."""
+        file_path = str(self._settings.value("library/last_track", "") or "")
+        if not file_path:
+            return
+        row = self._database.get_track_context(file_path)
+        if row is None:
+            self._settings.remove("library/last_track")
+            return
+        album_id = int(row["album_id"])
+        if bool(row["is_compilation"]):
+            self._ensure_section_loaded("compilations")
+            self.stack.setCurrentWidget(self.compilations_page)
+            self.compilations_page.locate(album_id, file_path)
+            self.sidebar.select("compilations", emit_signal=False)
+            self.setWindowTitle("Vinqelo Player — Compilaciones")
+        else:
+            artist_id = int(row["artist_id"])
+            self._ensure_section_loaded("artists")
+            self.stack.setCurrentWidget(self.artists_page)
+            self.artists_page.locate(artist_id, album_id, file_path)
+            self.sidebar.select("artists", emit_signal=False)
+            self.setWindowTitle("Vinqelo Player — Artistas")
+        self._load_last_track_stopped(album_id, file_path)
+        self.sidebar.set_now_playing_available(False)
+
+    def _load_last_track_stopped(self, album_id: int, file_path: str) -> None:
+        controller = self._player_controller
+        if controller is None:
+            return
+        rows = [
+            row for row in self._database.get_tracks_for_album(album_id)
+            if Path(str(row["file_path"])).is_file()
+        ]
+        start_index = next(
+            (
+                index for index, row in enumerate(rows)
+                if str(row["file_path"]) == file_path
+            ),
+            -1,
+        )
+        if start_index < 0:
+            return
+        paths = [Path(str(row["file_path"])).resolve() for row in rows]
+        metadata = {
+            str(path): (
+                str(
+                    (row["track_artist"] if row["is_compilation"] else row["artist_name"])
+                    or ""
+                ),
+                str(row["album_title"]),
+            )
+            for path, row in zip(paths, rows)
+        }
+        controller.set_queue(
+            paths,
+            start_index=start_index,
+            autoplay=False,
+            folder_metadata=metadata,
+        )
 
     def _highlight_track_in_current_page(self) -> None:
         file_path = str(self._playback_context.get("file_path", ""))
@@ -824,9 +1031,25 @@ class MainWindow(QMainWindow):
             return
 
         self._logger.info("Abriendo archivo de audio: %s", selected)
+        self.open_audio_paths([Path(selected)])
+
+    def open_audio_paths(self, file_paths: list[Path]) -> None:
+        """Abre archivos recibidos desde Windows o desde el selector interno."""
+        if self._player_controller is None:
+            return
+        from library.audio_formats import is_supported_audio
+
+        paths = [
+            path.expanduser().resolve()
+            for path in file_paths
+            if is_supported_audio(path.expanduser())
+        ]
+        if not paths:
+            return
+        self._logger.info("Abriendo %d archivo(s) desde Windows", len(paths))
         self._playback_context = {}
         self.sidebar.set_now_playing_available(False)
-        self._player_controller.open_file(Path(selected))
+        self._player_controller.set_queue(paths, start_index=0, autoplay=True)
 
     def _show_player_error(self, message: str) -> None:
         self._logger.error("Error de reproducción: %s", message)
@@ -1137,7 +1360,9 @@ class MainWindow(QMainWindow):
         if hasattr(self, "_loading_banner"):
             self._loading_banner.center_banner()
         if hasattr(self, "window_controls"):
-            self.window_controls.move(max(0, self.width() - 122), 7)
+            self.window_controls.move(
+                max(0, self.width() - self.window_controls.width() - 10), 5
+            )
             self.window_controls.raise_()
         if self.isMaximized():
             self._mask_timer.stop()

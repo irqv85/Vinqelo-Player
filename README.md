@@ -193,6 +193,25 @@ letra del disco externo evita tener que importar la colección nuevamente.
 Windows SmartScreen puede advertir sobre el ejecutable porque esta compilación
 no está firmada con un certificado comercial.
 
+## Instalador para Windows
+
+El asistente de instalación se encuentra en:
+
+```text
+dist/Vinqelo Player Setup 0.7.0.exe
+```
+
+El instalador trabaja por usuario y no solicita permisos de administrador.
+Detecta el idioma de Windows entre español, inglés, portugués, francés, alemán
+e italiano. Puede crear un acceso directo y registrar Vinqelo para abrir MP3,
+FLAC, WAV, OGG, M4A y AAC. Cada formato tiene un icono Vinqelo identificable.
+
+En la primera ejecución de una instalación nueva se confirma la carpeta Música
+detectada por Windows. También puede elegirse otra carpeta o completar esta
+configuración después. La biblioteca, las carátulas, las listas y el historial
+se guardan en `Vinqelo Player Data` junto a la instalación y se conservan al
+actualizar el programa.
+
 ## Manejo de errores
 
 - Validación de carpetas inexistentes.
