@@ -16,7 +16,6 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMessageBox,
-    QProgressDialog,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -30,6 +29,7 @@ from library.library_exporter import (
     build_playlist_relative_path,
 )
 from ui.i18n import translate_text
+from ui.export_progress import ExportProgressDialog
 
 
 class LibraryExportDialog(QDialog):
@@ -219,8 +219,7 @@ class LibraryExportDialog(QDialog):
             return
         self._updating = True
         state = item.checkState(0)
-        for index in range(item.childCount()):
-            item.child(index).setCheckState(0, state)
+        self._set_descendants_state(item, state)
         parent = item.parent()
         while parent is not None:
             checked = [
@@ -234,6 +233,16 @@ class LibraryExportDialog(QDialog):
             )
             parent = parent.parent()
         self._updating = False
+
+    @classmethod
+    def _set_descendants_state(
+        cls, item: QTreeWidgetItem, state: Qt.CheckState
+    ) -> None:
+        """Propaga la selección hasta los álbumes y no sólo al primer nivel."""
+        for index in range(item.childCount()):
+            child = item.child(index)
+            child.setCheckState(0, state)
+            cls._set_descendants_state(child, state)
 
     def selected_sources(self) -> list[tuple[object, ...]]:
         result: list[tuple[object, ...]] = []
@@ -265,7 +274,7 @@ class LibraryExportController(QObject):
         self.parent_widget = parent
         self._thread: QThread | None = None
         self._worker: LibraryExportWorker | None = None
-        self._progress: QProgressDialog | None = None
+        self._progress: ExportProgressDialog | None = None
 
     def start(self) -> None:
         if self._thread is not None:
@@ -341,7 +350,7 @@ class LibraryExportController(QObject):
         )
         thread = QThread(self)
         worker.moveToThread(thread)
-        progress = QProgressDialog(
+        progress = ExportProgressDialog(
             translate_text("Preparando exportación…"),
             translate_text("Cancelar"),
             0,
@@ -378,8 +387,6 @@ class LibraryExportController(QObject):
         cancelled: bool,
         skipped: int,
     ) -> None:
-        if self._progress is not None:
-            self._progress.close()
         message = (
             translate_text("Exportación cancelada.")
             if cancelled else translate_text("Exportación terminada")
@@ -392,16 +399,26 @@ class LibraryExportController(QObject):
             )
         if errors:
             message += f"\n\n{len(list(errors))} archivo(s) no pudieron exportarse."
-        QMessageBox.information(
-            self.parent_widget, translate_text("Exportación"), message
+        title = translate_text("Exportación")
+        minimized = bool(
+            self._progress
+            and self._progress.finish(
+                title,
+                message,
+                success=not cancelled and not bool(errors),
+            )
         )
+        if not minimized:
+            QMessageBox.information(self.parent_widget, title, message)
 
     def _failed(self, message: str) -> None:
-        if self._progress is not None:
-            self._progress.close()
-        QMessageBox.warning(
-            self.parent_widget, translate_text("No se pudo exportar"), message
+        title = translate_text("No se pudo exportar")
+        minimized = bool(
+            self._progress
+            and self._progress.finish(title, message, success=False)
         )
+        if not minimized:
+            QMessageBox.warning(self.parent_widget, title, message)
 
     def _cleanup(self) -> None:
         if self._worker is not None:

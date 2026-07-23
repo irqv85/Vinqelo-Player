@@ -11,6 +11,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from config import APP_NAME, APP_VERSION, ASSETS_DIR, DATABASE_PATH
+from single_instance import SingleInstanceCoordinator
 from ui.loading_banner import LoadingBanner
 
 
@@ -20,7 +21,21 @@ def main() -> int:
     app.setOrganizationName("Vinqelo")
     app.setApplicationVersion(APP_VERSION)
     app.setWindowIcon(QIcon(str(ASSETS_DIR / "icons" / "vinqelo-v.png")))
+    app.setQuitOnLastWindowClosed(False)
     app.setStyle("Fusion")
+    from library.audio_formats import is_supported_audio
+
+    launch_files = [
+        path
+        for argument in sys.argv[1:]
+        if is_supported_audio(path := Path(argument))
+    ]
+    instance = SingleInstanceCoordinator(parent=app)
+    if not instance.start_or_forward(launch_files):
+        return 0
+    app._vinqelo_single_instance = instance
+    app.aboutToQuit.connect(instance.close)
+
     from ui.scrolling import enable_smooth_scrolling
 
     scroll_tuner = enable_smooth_scrolling(app)
@@ -73,8 +88,6 @@ def main() -> int:
         app.processEvents()
         from ui.main_window import MainWindow
         from ui.styles import build_stylesheet
-        from library.audio_formats import is_supported_audio
-
         preferences = QSettings("Vinqelo", "Vinqelo Player")
         app.setStyleSheet(
             build_stylesheet(
@@ -82,17 +95,13 @@ def main() -> int:
                 preferences.value("appearance/font_size", 13, type=int),
             )
         )
-        launch_files = [
-            path
-            for argument in sys.argv[1:]
-            if is_supported_audio(path := Path(argument))
-        ]
         window = MainWindow(
             database, confirm_initial_library=not bool(launch_files)
         )
         window.show()
         if launch_files:
             window.open_audio_paths(launch_files)
+        instance.set_activation_handler(window.handle_external_activation)
         startup.stop()
         logger.info("Vinqelo Player iniciado")
         return app.exec()

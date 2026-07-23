@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtCore import QUrl, Qt
+from PySide6.QtGui import QDesktopServices, QPixmap
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -22,6 +22,7 @@ from config import (
     APP_VERSION,
     ASSETS_DIR,
     LICENSE_PATH,
+    PROJECT_URL,
 )
 from ui.donation_dialog import DonationDialog
 from ui.i18n import translate_text
@@ -69,11 +70,18 @@ class AboutDialog(QDialog):
             f"{translate_text('Desarrollado por')} <b>{APP_AUTHOR}</b><br>"
             f"{APP_AUTHOR_EMAIL}<br><br>"
             f"{translate_text('Licencia')}: <b>{APP_LICENSE}</b><br>"
+            f"{translate_text('Código fuente')}: "
+            f'<a style="color:#4b9aff" href="{PROJECT_URL}">'
+            "github.com/irqv85/Vinqelo-Player</a><br>"
             f"Copyright © 2026 {APP_AUTHOR}.<br><br>"
             f"{translate_text('Software libre, distribuido sin garantía, conforme a los términos de la licencia.')}"
         )
         details.setObjectName("aboutDetails")
         details.setTextFormat(Qt.TextFormat.RichText)
+        details.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextBrowserInteraction
+        )
+        details.setOpenExternalLinks(True)
         details.setWordWrap(True)
         layout.addWidget(details)
 
@@ -92,11 +100,17 @@ class AboutDialog(QDialog):
         self.license_button = QPushButton("Ver licencia completa")
         self.license_button.setObjectName("secondaryButton")
         self.license_button.clicked.connect(self._toggle_license)
+        github_button = QPushButton("GitHub")
+        github_button.setObjectName("secondaryButton")
+        github_button.clicked.connect(
+            lambda: QDesktopServices.openUrl(QUrl(PROJECT_URL))
+        )
         close_button = QPushButton("Cerrar")
         close_button.setObjectName("primaryButton")
         close_button.clicked.connect(self.accept)
         buttons.addWidget(support_button)
         buttons.addWidget(self.license_button)
+        buttons.addWidget(github_button)
         buttons.addStretch(1)
         buttons.addWidget(close_button)
         layout.addLayout(buttons)

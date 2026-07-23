@@ -8,10 +8,11 @@ from pathlib import Path
 
 
 APP_NAME = "Vinqelo Player"
-APP_VERSION = "0.7.2"
+APP_VERSION = "0.7.3"
 APP_AUTHOR = "Irán Quintero"
 APP_AUTHOR_EMAIL = "vinqeloapp@gmail.com"
 APP_LICENSE = "GNU General Public License v3.0"
+PROJECT_URL = "https://github.com/irqv85/Vinqelo-Player"
 STORE_PACKAGE_FAMILY_NAME = "irqv8.VinqeloPlayer_4mh58ts6mv4gw"
 PROJECT_ROOT = Path(__file__).resolve().parent
 

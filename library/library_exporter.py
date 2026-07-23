@@ -11,6 +11,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal, Slot
 
 from library.playlist_exporter import safe_filename
+from library.process_utils import hidden_low_priority_process_options
 
 
 MAX_BITRATES = {"mp3": 128, "wma": 160}
@@ -211,14 +212,11 @@ class LibraryExportWorker(QObject):
     def _run_process(
         self, command: list[str], *, accept_failure: bool = False
     ) -> bytes:
-        creationflags = (
-            subprocess.BELOW_NORMAL_PRIORITY_CLASS if os.name == "nt" else 0
-        )
         self._process = subprocess.Popen(
             command,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
-            creationflags=creationflags,
+            **hidden_low_priority_process_options(),
         )
         _, stderr = self._process.communicate()
         return_code = self._process.returncode

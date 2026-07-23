@@ -127,6 +127,29 @@ QProgressDialog QPushButton {
     padding: 0 12px;
 }
 
+QDialog#exportProgressDialog {
+    background-color: #10192b;
+}
+
+QDialog#exportProgressDialog QLabel#exportProgressDetail {
+    color: #e7edf7;
+    font-weight: 600;
+}
+
+QDialog#exportProgressDialog QProgressBar {
+    background-color: #0b1424;
+    border: 1px solid #304563;
+    border-radius: 5px;
+    color: #ffffff;
+    min-height: 22px;
+    text-align: center;
+}
+
+QDialog#exportProgressDialog QProgressBar::chunk {
+    background-color: #176fe5;
+    border-radius: 4px;
+}
+
 QMessageBox#initialLibraryDialog QPushButton#initialLibraryButton {
     border-radius: 5px;
     font-size: 11px;
@@ -1190,9 +1213,24 @@ QDialog {
 }
 
 QDialog#aboutDialog,
-QDialog#donationDialog {
+QDialog#donationDialog,
+QDialog#exportProgressDialog {
     background-color: #d7dfe7;
     color: #23384c;
+}
+
+QDialog#exportProgressDialog QLabel#exportProgressDetail {
+    color: #23384c;
+}
+
+QDialog#exportProgressDialog QProgressBar {
+    background-color: #f3f6f8;
+    border-color: #8fa2b4;
+    color: #23384c;
+}
+
+QDialog#exportProgressDialog QProgressBar::chunk {
+    background-color: #3f709d;
 }
 
 QDialog#aboutDialog QLabel,

@@ -1,6 +1,6 @@
 # Vinqelo Player
 
-**Current version: 0.7.2**
+**Current version: 0.7.3**
 
 Vinqelo Player is a local music player and library manager for Windows. It
 organizes music according to the user's real folder structure, keeps the
@@ -9,6 +9,20 @@ for large libraries.
 
 The application is available through Microsoft Store and is licensed under the
 GNU General Public License v3.0.
+
+## What's new in 0.7.3
+
+- Single-instance operation: launching Vinqelo again restores the application
+  that is already running instead of opening a duplicate window.
+- Opening one or several associated audio files from Windows reuses the active
+  player and creates a temporary queue without importing those files.
+- Background playback and export progress are available from the Windows
+  system tray.
+- Library export now respects the exact artist, album, folder, subfolder, or
+  playlist selection instead of exporting unrelated music.
+- Conversion processes remain hidden and run with low priority.
+- Microsoft Store, Start menu, search, taskbar, tray, and audio-file icons use
+  the corrected transparent artwork and dedicated size variants.
 
 ## Main features
 
@@ -23,7 +37,13 @@ GNU General Public License v3.0.
 - Shuffle the current playback context.
 - A single click selects a track; a double click starts playback.
 - Opening an associated audio file from Windows loads it and starts playback.
+- Opening several associated files creates a temporary queue without importing
+  them into the library.
 - Windows multimedia keys and system media controls are supported.
+- Closing the main window keeps Vinqelo available in the Windows system tray.
+  Its compact menu provides previous, play/pause, stop, next, restore, and exit.
+- Vinqelo runs as a single instance. Opening the application or an associated
+  audio file again reuses the existing window and playback engine.
 - The current track can be located and centered again from the sidebar or the
   lower playback panel.
 - The last loaded track is restored when the application starts and remains
@@ -132,6 +152,8 @@ Music library/
 - Conversion uses one worker thread with low process priority to reduce its
   impact on playback and system responsiveness.
 - Export can be cancelled without leaving incomplete final files.
+- Export progress can be minimized to the system tray, restored or cancelled
+  from its menu, and Windows displays a notification when it finishes.
 
 ### Sound console
 
@@ -159,6 +181,9 @@ Music library/
   Smart Playlists, Playlists, Now Playing, and Play Queue.
 - Now Playing is displayed only while a playback context exists.
 - Startup banner provides immediate feedback while the application is opening.
+- Transparent, size-specific Windows icons are included for Microsoft Store,
+  Start, search, taskbar, and the system tray.
+- Associated audio files use their own Vinqelo document icon.
 
 ### Privacy and reliability
 
@@ -217,20 +242,22 @@ Run the complete automated suite with:
 python -m unittest discover -s tests -v
 ```
 
-The suite covers database operations, library scanning, file moves, manual
-classifications, audio formats, playback helpers, artwork caching, metadata,
-listening history, playlists, and library export.
+The 48-test suite covers database operations, library scanning, file moves,
+manual classifications, audio formats, playback helpers, artwork caching,
+metadata, listening history, playlists, library export selection,
+single-instance activation, hidden conversion processes, and Store assets.
 
 ## License and contact
 
 - License: GNU General Public License v3.0
+- Source code: https://github.com/irqv85/Vinqelo-Player
 - Contact: `vinqeloapp@gmail.com`
 
 ---
 
 # Vinqelo Player — Español
 
-**Versión actual: 0.7.2**
+**Versión actual: 0.7.3**
 
 Vinqelo Player es un reproductor y administrador de música local para Windows.
 Organiza la música según la estructura real de carpetas del usuario, conserva
@@ -239,6 +266,20 @@ bibliotecas grandes.
 
 La aplicación está disponible mediante Microsoft Store y se distribuye bajo la
 licencia GNU General Public License v3.0.
+
+## Novedades de la versión 0.7.3
+
+- Funcionamiento con una sola instancia: volver a iniciar Vinqelo restaura la
+  aplicación que ya está abierta en lugar de crear otra ventana.
+- Abrir desde Windows uno o varios archivos asociados reutiliza el reproductor
+  activo y crea una cola temporal sin importarlos a la biblioteca.
+- La reproducción en segundo plano y el progreso de las exportaciones están
+  disponibles desde la bandeja de Windows.
+- La exportación de biblioteca respeta exactamente el artista, álbum, carpeta,
+  subcarpeta o lista seleccionados, sin copiar música ajena a la selección.
+- Los procesos de conversión permanecen ocultos y trabajan con prioridad baja.
+- Los iconos de Microsoft Store, Inicio, búsqueda, barra de tareas, bandeja y
+  archivos de audio utilizan los recursos transparentes y tamaños corregidos.
 
 ## Funciones principales
 
@@ -254,7 +295,14 @@ licencia GNU General Public License v3.0.
 - Un clic selecciona una pista; el doble clic inicia la reproducción.
 - Al abrir desde Windows un archivo asociado, Vinqelo lo carga y comienza a
   reproducirlo.
+- Al abrir varios archivos asociados, se crea una cola temporal sin agregarlos
+  a la biblioteca.
 - Compatibilidad con teclas multimedia y controles multimedia de Windows.
+- Al cerrar la ventana principal, Vinqelo permanece en la bandeja de Windows.
+  El menú compacto ofrece anterior, reproducir/pausar, detener, siguiente,
+  restaurar y salir.
+- Vinqelo utiliza una sola instancia. Volver a abrir la aplicación o un archivo
+  asociado reutiliza la ventana y el reproductor que ya están activos.
 - Reproducción en curso permite regresar y centrar la pista actual desde la
   barra lateral o desde el panel inferior.
 - La última pista cargada se restaura al iniciar y queda preparada para
@@ -368,6 +416,8 @@ Biblioteca musical/
 - La conversión utiliza un solo hilo y prioridad baja para reducir su impacto
   sobre la reproducción y el equipo.
 - La exportación puede cancelarse sin dejar archivos finales incompletos.
+- El progreso puede minimizarse a la bandeja, restaurarse o cancelarse desde su
+  menú, y Windows muestra una notificación al terminar.
 
 ### Consola de sonido
 
@@ -395,6 +445,10 @@ Biblioteca musical/
   Carpetas, Listas inteligentes, Listas, Reproducción en curso y Cola.
 - Reproducción en curso solo aparece cuando existe un contexto activo.
 - El banner de inicio informa inmediatamente que la aplicación está abriendo.
+- Incluye iconos transparentes adaptados a cada tamaño de Microsoft Store,
+  Inicio, búsqueda, barra de tareas y bandeja.
+- Los archivos de audio asociados utilizan su propio icono de documento
+  Vinqelo.
 
 ### Privacidad y estabilidad
 
@@ -453,11 +507,13 @@ La suite completa se ejecuta con:
 python -m unittest discover -s tests -v
 ```
 
-Las pruebas cubren base de datos, escaneo, movimientos de archivos,
+Las 48 pruebas cubren base de datos, escaneo, movimientos de archivos,
 clasificaciones manuales, formatos de audio, reproducción, caché de carátulas,
-metadatos, historial, listas y exportación de biblioteca.
+metadatos, historial, listas, selección de exportaciones, instancia única,
+procesos de conversión ocultos y recursos de Microsoft Store.
 
 ## Licencia y contacto
 
 - Licencia: GNU General Public License v3.0
+- Código fuente: https://github.com/irqv85/Vinqelo-Player
 - Contacto: `vinqeloapp@gmail.com`

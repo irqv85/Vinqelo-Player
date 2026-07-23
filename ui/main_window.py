@@ -78,6 +78,7 @@ from ui.pages.search_page import SearchPage
 from ui.pages.smart_playlists_page import SmartPlaylistsPage
 from ui.settings_dialog import SettingsDialog
 from ui.styles import build_stylesheet
+from ui.system_tray import VinqeloSystemTray
 from ui.widgets.player_bar import PlayerBar
 from ui.widgets.sidebar import Sidebar
 
@@ -98,6 +99,9 @@ class MainWindow(QMainWindow):
         self._windows_media_session: WindowsMediaSession | None = None
         self._effects_dialog: EffectsDialog | None = None
         self._player_error_message = ""
+        self._force_quit = False
+        self._tray_notice_shown = False
+        self._system_tray: VinqeloSystemTray | None = None
         self._cover_art = CoverArtService(self)
         self._settings = QSettings("Vinqelo", "Vinqelo Player")
         self._active_theme = str(
@@ -263,6 +267,8 @@ class MainWindow(QMainWindow):
         self._cover_art.cover_unavailable.connect(self.player_bar.set_cover_unavailable)
         self._cover_art.metadata_ready.connect(self._handle_online_metadata)
         self._initialize_player()
+        self._system_tray = VinqeloSystemTray(self)
+        self._system_tray.bind_player(self._player_controller)
         self.show_section("library")
         QTimer.singleShot(0, self._restore_last_track_location)
         if confirm_initial_library:
@@ -321,6 +327,8 @@ class MainWindow(QMainWindow):
         self.close_button.setIcon(window_control_icon("close", color))
         self.sidebar.apply_theme(theme)
         self.library_page.apply_theme(theme)
+        if self._system_tray is not None:
+            self._system_tray.apply_theme(theme)
 
     def _create_application_menu(self) -> None:
         bar = self.menuBar()
@@ -346,7 +354,7 @@ class MainWindow(QMainWindow):
         action(file_menu, "Actualizar biblioteca", self.update_library)
         action(file_menu, "Exportar biblioteca", self._library_export.start)
         file_menu.addSeparator()
-        action(file_menu, "Salir", self.close)
+        action(file_menu, "Salir", self._quit_application)
 
         edit_menu = menu("Editar")
         action(edit_menu, "Buscar", lambda: self.show_section("search"))
@@ -477,6 +485,8 @@ class MainWindow(QMainWindow):
                 self.smart_playlists_page.refresh()
                 self.folders_page.refresh()
                 self._retranslate_application_menu()
+                if self._system_tray is not None:
+                    self._system_tray.retranslate()
         if "show_menu_bar" in values:
             self._set_menu_bar_visible(bool(values["show_menu_bar"]))
 
@@ -1209,7 +1219,7 @@ class MainWindow(QMainWindow):
         self.open_audio_paths([Path(selected)])
 
     def open_audio_paths(self, file_paths: list[Path]) -> None:
-        """Abre archivos recibidos desde Windows o desde el selector interno."""
+        """Reproduce archivos externos en una cola temporal, sin importarlos."""
         if self._player_controller is None:
             return
         from library.audio_formats import is_supported_audio
@@ -1226,12 +1236,30 @@ class MainWindow(QMainWindow):
         self.sidebar.set_now_playing_available(False)
         self._player_controller.set_queue(paths, start_index=0, autoplay=True)
 
+    def handle_external_activation(self, file_paths: list[str]) -> None:
+        """Atiende un nuevo inicio de Windows dentro de esta misma ventana."""
+        if file_paths:
+            self.open_audio_paths([Path(value) for value in file_paths])
+        if self._system_tray is not None:
+            self._system_tray.restore_window()
+        else:
+            self.show()
+            self.raise_()
+            self.activateWindow()
+
     def _show_player_error(self, message: str) -> None:
         self._logger.error("Error de reproducción: %s", message)
         QMessageBox.warning(self, "No se pudo reproducir", message)
 
     def _show_about(self) -> None:
         AboutDialog(self).exec()
+
+    def _quit_application(self) -> None:
+        self._force_quit = True
+        self.close()
+        application = QApplication.instance()
+        if application is not None:
+            application.quit()
 
     def _toggle_maximized(self) -> None:
         color = "#40576d" if self._active_theme == "musicmatch" else "#dce8f8"
@@ -1566,6 +1594,18 @@ class MainWindow(QMainWindow):
         self.setMask(QRegion(path.toFillPolygon().toPolygon()))
 
     def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 - nombre definido por Qt
+        if (
+            not self._force_quit
+            and self._system_tray is not None
+            and self._system_tray.is_available
+        ):
+            self._settings.setValue("window/geometry", self.saveGeometry())
+            self.hide()
+            event.ignore()
+            if not self._tray_notice_shown:
+                self._tray_notice_shown = True
+                self._system_tray.notify_running_in_background()
+            return
         self._loading_banner.stop()
         if self._windows_media_session is not None:
             self._windows_media_session.shutdown()

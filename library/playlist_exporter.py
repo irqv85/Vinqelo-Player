@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-import os
+import logging
 import re
 import subprocess
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal, Slot
+
+from library.process_utils import hidden_low_priority_process_options
 
 
 INVALID_FILENAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
@@ -43,6 +45,7 @@ class PlaylistExportWorker(QObject):
         self.tracks = tracks
         self.destination = Path(destination)
         self.output_format = output_format.lower().lstrip(".")
+        self._logger = logging.getLogger(__name__)
         self._cancelled = False
         self._process: subprocess.Popen[bytes] | None = None
 
@@ -79,10 +82,18 @@ class PlaylistExportWorker(QObject):
                     exported += 1
                 except Exception as exc:
                     if not self._cancelled:
-                        errors.append(f"{source.name}: {exc}")
-            self.progress.emit(exported, len(self.tracks), "Finalizando")
+                        error = f"{source.name}: {exc}"
+                        errors.append(error)
+                        self._logger.error(
+                            "No se pudo exportar una pista de la playlist: %s",
+                            error,
+                        )
+            self.progress.emit(
+                len(self.tracks), len(self.tracks), "Finalizando"
+            )
             self.finished.emit(str(target), exported, errors, self._cancelled)
         except Exception as exc:
+            self._logger.exception("Falló la exportación de la playlist")
             self.failed.emit(str(exc))
 
     def _convert(self, source: Path, output: Path) -> None:
@@ -99,14 +110,11 @@ class PlaylistExportWorker(QObject):
             "-y", "-i", str(source), "-map_metadata", "0", "-vn", "-threads", "1",
             *EXPORT_AUDIO_PROFILES[self.output_format], str(temporary),
         ]
-        creationflags = 0
-        if os.name == "nt":
-            creationflags = subprocess.BELOW_NORMAL_PRIORITY_CLASS
         self._process = subprocess.Popen(
             command,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
-            creationflags=creationflags,
+            **hidden_low_priority_process_options(),
         )
         _, stderr = self._process.communicate()
         return_code = self._process.returncode
@@ -117,5 +125,7 @@ class PlaylistExportWorker(QObject):
         if return_code:
             temporary.unlink(missing_ok=True)
             message = stderr.decode("utf-8", errors="replace").strip()
+            if len(message) > 1200:
+                message = message[-1200:]
             raise RuntimeError(message or "fallo la conversion")
         temporary.replace(output)

@@ -2,13 +2,14 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap rescap">
+  IgnorableNamespaces="uap uap3 rescap">
 
   <Identity
     Name="irqv8.VinqeloPlayer"
     Publisher="CN=516D3D9D-99E2-4CEF-8F75-6AE32D0DFA72"
-    Version="0.7.2.0"
+    Version="0.7.3.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
@@ -42,7 +43,7 @@
       <uap:VisualElements
         DisplayName="Vinqelo Player"
         Description="Reproductor y biblioteca de musica local."
-        BackgroundColor="#0B1424"
+        BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
         <uap:DefaultTile
@@ -50,8 +51,10 @@
           Square310x310Logo="Assets\Square310x310Logo.png" />
       </uap:VisualElements>
       <Extensions>
-        <uap:Extension Category="windows.fileTypeAssociation">
-          <uap:FileTypeAssociation Name="vinqeloaudio">
+        <uap3:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation
+            Name="vinqeloaudio"
+            MultiSelectModel="Player">
             <uap:DisplayName>Archivo de audio de Vinqelo</uap:DisplayName>
             <uap:Logo>Assets\AudioFileLogo.png</uap:Logo>
             <uap:SupportedFileTypes>
@@ -62,8 +65,8 @@
               <uap:FileType ContentType="audio/mp4">.m4a</uap:FileType>
               <uap:FileType ContentType="audio/aac">.aac</uap:FileType>
             </uap:SupportedFileTypes>
-          </uap:FileTypeAssociation>
-        </uap:Extension>
+          </uap3:FileTypeAssociation>
+        </uap3:Extension>
       </Extensions>
     </Application>
   </Applications>

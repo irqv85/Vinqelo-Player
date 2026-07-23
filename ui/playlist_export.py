@@ -5,11 +5,12 @@ from __future__ import annotations
 from PySide6.QtCore import QObject, QThread, Qt
 from PySide6.QtWidgets import (
     QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QInputDialog, QLabel,
-    QListWidget, QListWidgetItem, QMessageBox, QProgressDialog, QVBoxLayout, QWidget,
+    QListWidget, QListWidgetItem, QMessageBox, QVBoxLayout, QWidget,
 )
 
 from library.playlist_exporter import PlaylistExportWorker
 from ui.i18n import translate_text
+from ui.export_progress import ExportProgressDialog
 
 
 class TrackSelectionDialog(QDialog):
@@ -95,7 +96,7 @@ class PlaylistExportController(QObject):
         self.parent_widget = parent
         self._thread: QThread | None = None
         self._worker: PlaylistExportWorker | None = None
-        self._progress: QProgressDialog | None = None
+        self._progress: ExportProgressDialog | None = None
 
     def start(self, name: str, rows: list[object]) -> None:
         if self._thread is not None:
@@ -141,7 +142,7 @@ class PlaylistExportController(QObject):
         worker = PlaylistExportWorker(name, tracks, destination, format_options[output_label])
         thread = QThread(self)
         worker.moveToThread(thread)
-        progress = QProgressDialog(
+        progress = ExportProgressDialog(
             translate_text("Preparando exportación…"),
             translate_text("Cancelar"),
             0,
@@ -167,7 +168,7 @@ class PlaylistExportController(QObject):
         self._worker = worker
         self._progress = progress
         progress.show()
-        thread.start()
+        thread.start(QThread.Priority.LowPriority)
 
     def _update_progress(self, current: int, total: int, title: str) -> None:
         if self._progress is None:
@@ -179,8 +180,6 @@ class PlaylistExportController(QObject):
         )
 
     def _finished(self, folder: str, exported: int, errors: object, cancelled: bool) -> None:
-        if self._progress is not None:
-            self._progress.close()
         error_list = list(errors or [])
         if cancelled:
             text = (
@@ -196,18 +195,33 @@ class PlaylistExportController(QObject):
         if error_list:
             text += (
                 f"\n\n{translate_text('No se pudieron exportar')} "
-                f"{translate_text(f'{len(error_list)} pistas')}."
+                f"{translate_text(f'{len(error_list)} pistas')}.\n"
+                f"{translate_text('Detalles')}:\n"
+                + "\n".join(f"• {error}" for error in error_list[:3])
             )
-        QMessageBox.information(
-            self.parent_widget, translate_text("Exportación terminada"), text
+        title = translate_text("Exportación terminada")
+        minimized = bool(
+            self._progress
+            and self._progress.finish(
+                title,
+                text,
+                success=not cancelled and not bool(error_list),
+            )
         )
+        if not minimized:
+            if error_list:
+                QMessageBox.warning(self.parent_widget, title, text)
+            else:
+                QMessageBox.information(self.parent_widget, title, text)
 
     def _failed(self, message: str) -> None:
-        if self._progress is not None:
-            self._progress.close()
-        QMessageBox.warning(
-            self.parent_widget, translate_text("No se pudo exportar"), message
+        title = translate_text("No se pudo exportar")
+        minimized = bool(
+            self._progress
+            and self._progress.finish(title, message, success=False)
         )
+        if not minimized:
+            QMessageBox.warning(self.parent_widget, title, message)
 
     def _cleanup(self) -> None:
         if self._worker is not None:

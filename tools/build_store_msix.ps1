@@ -1,6 +1,6 @@
 param(
-    [string]$PackageVersion = "0.7.2.0",
-    [string]$OutputName = "Vinqelo Player 0.7.2 Store x64.msix",
+    [string]$PackageVersion = "0.7.3.0",
+    [string]$OutputName = "Vinqelo Player 0.7.3 Store x64.msix",
     [string]$SourceDirectory = "dist\Vinqelo Player Store Clean"
 )
 

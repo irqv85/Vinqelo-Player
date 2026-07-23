@@ -463,3 +463,27 @@
 2026-07-23 10:52:31,407 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
 2026-07-23 10:52:32,071 | INFO | __main__ | Vinqelo Player iniciado
 2026-07-23 10:52:32,203 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-23 13:18:07,276 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-23 13:18:10,068 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-23 13:18:10,989 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-23 13:18:12,222 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-23 13:36:24,197 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-23 13:36:24,856 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-23 13:36:25,582 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-23 13:36:25,715 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-23 14:02:04,086 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-23 14:02:04,743 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-23 14:02:05,494 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-23 14:02:05,629 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-23 14:09:48,973 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-23 14:09:49,593 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-23 14:09:50,362 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-23 14:09:50,493 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-23 14:20:06,340 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-23 14:20:06,955 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-23 14:20:07,760 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-23 14:20:07,895 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-23 14:21:16,286 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-23 14:21:16,862 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-23 14:21:17,613 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-23 14:21:17,749 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
