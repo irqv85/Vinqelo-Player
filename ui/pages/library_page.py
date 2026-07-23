@@ -27,10 +27,12 @@ from library.artist_art import collage_cache_files
 from library.cover_art import cover_cache_path
 from library.manual_art import manual_artist_image_path, read_image
 from ui.icons import navigation_icon
+from ui.i18n import translate_text
 from ui.pages.collection_pages import (
     _collage_pixmap,
     _default_pixmap,
     _play_payload,
+    connect_track_click,
     mark_playing_track,
 )
 from ui.widgets.stat_card import StatCard
@@ -42,8 +44,9 @@ class LibraryPage(QWidget):
     play_requested = Signal(object)
     enqueue_requested = Signal(object)
     playlist_requested = Signal(object)
-    artist_requested = Signal(int)
+    artist_requested = Signal(object)
     update_library_requested = Signal()
+    export_library_requested = Signal()
 
     def __init__(self, database: DatabaseManager) -> None:
         super().__init__()
@@ -68,27 +71,43 @@ class LibraryPage(QWidget):
         text_box.addWidget(subtitle)
 
         actions = QHBoxLayout()
-        actions.setSpacing(8)
+        actions.setSpacing(6)
+        actions.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         open_button = QPushButton()
+        self.open_button = open_button
         open_button.setObjectName("toolbarIcon")
         open_button.setIcon(navigation_icon("file", "#dce7f7"))
+        open_button.setIconSize(QSize(16, 16))
         open_button.setToolTip("Abrir un archivo")
-        open_button.setFixedSize(36, 36)
+        open_button.setFixedSize(32, 32)
         open_button.clicked.connect(self.open_file_requested.emit)
         update_button = QPushButton()
+        self.update_button = update_button
         update_button.setObjectName("toolbarIcon")
         update_button.setIcon(navigation_icon("refresh", "#dce7f7"))
+        update_button.setIconSize(QSize(16, 16))
         update_button.setToolTip("Actualizar biblioteca")
-        update_button.setFixedSize(36, 36)
+        update_button.setFixedSize(32, 32)
         update_button.clicked.connect(self.update_library_requested.emit)
+        export_button = QPushButton()
+        self.export_button = export_button
+        export_button.setObjectName("toolbarIcon")
+        export_button.setIcon(navigation_icon("export", "#8fa7c7"))
+        export_button.setIconSize(QSize(16, 16))
+        export_button.setToolTip("Exportar biblioteca")
+        export_button.setFixedSize(32, 32)
+        export_button.clicked.connect(self.export_library_requested.emit)
         add_button = QPushButton()
+        self.add_button = add_button
         add_button.setObjectName("toolbarIconPrimary")
         add_button.setIcon(navigation_icon("folder_add", "#ffffff"))
+        add_button.setIconSize(QSize(16, 16))
         add_button.setToolTip("Agregar raíz de biblioteca")
-        add_button.setFixedSize(36, 36)
+        add_button.setFixedSize(32, 32)
         add_button.clicked.connect(self.add_folder_requested.emit)
         actions.addWidget(open_button)
         actions.addWidget(update_button)
+        actions.addWidget(export_button)
         actions.addWidget(add_button)
         header.addLayout(text_box, 1)
         header.addLayout(actions)
@@ -102,10 +121,15 @@ class LibraryPage(QWidget):
             "albums": StatCard("Álbumes"),
             "compilations": StatCard("Compilaciones"),
             "tracks": StatCard("Pistas"),
+            "duration": StatCard("Duración total"),
         }
         for column, card in enumerate(self._stats.values()):
             stats_layout.addWidget(card, 0, column)
         layout.addLayout(stats_layout)
+        self._format_stats_layout = QGridLayout()
+        self._format_stats_layout.setHorizontalSpacing(9)
+        self._format_cards: list[StatCard] = []
+        layout.addLayout(self._format_stats_layout)
         layout.addSpacing(12)
 
         dashboard = QHBoxLayout()
@@ -131,7 +155,7 @@ class LibraryPage(QWidget):
         self.top_tracks.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.top_tracks.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.top_tracks.header().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        self.top_tracks.itemDoubleClicked.connect(self._play_top_track)
+        connect_track_click(self.top_tracks, self._play_top_track)
         self.top_tracks.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.top_tracks.customContextMenuRequested.connect(self._top_track_menu)
         track_layout.addWidget(self.top_tracks, 1)
@@ -156,9 +180,45 @@ class LibraryPage(QWidget):
 
     def refresh_stats(self) -> None:
         stats = self._database.get_library_stats()
-        for key, card in self._stats.items():
-            card.set_value(stats[key])
+        for key in ("artists", "albums", "compilations", "tracks"):
+            self._stats[key].set_value(stats[key])
+        summary = self._database.get_media_summary()
+        self._stats["duration"].set_value(
+            format_library_duration(float(summary["total_duration"] or 0))
+        )
+        self._refresh_format_cards(summary["formats"])
         self.refresh_dashboard()
+
+    def apply_theme(self, theme: str) -> None:
+        """Mantiene legibles los iconos sobre temas claros u oscuros."""
+        foreground = "#2d4358" if theme == "musicmatch" else "#dce7f7"
+        muted = "#4f6982" if theme == "musicmatch" else "#8fa7c7"
+        self.open_button.setIcon(navigation_icon("file", foreground))
+        self.update_button.setIcon(navigation_icon("refresh", foreground))
+        self.export_button.setIcon(navigation_icon("export", muted))
+        self.add_button.setIcon(navigation_icon("folder_add", "#ffffff"))
+
+    def _refresh_format_cards(self, formats: object) -> None:
+        while self._format_stats_layout.count():
+            item = self._format_stats_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        self._format_cards.clear()
+        rows = list(formats) if isinstance(formats, list) else []
+        for column, row in enumerate(rows):
+            bitrate = round(float(row["average_bitrate"] or 0))
+            caption = (
+                f'{row["file_format"]} · {bitrate} kbps '
+                f'{translate_text("promedio")}'
+                if bitrate > 0
+                else str(row["file_format"])
+            )
+            card = StatCard(caption)
+            card.setMinimumHeight(64)
+            card.set_value(int(row["track_count"] or 0))
+            self._format_stats_layout.addWidget(card, 0, column)
+            self._format_cards.append(card)
 
     def refresh_dashboard(self) -> None:
         self.top_artists.clear()
@@ -173,12 +233,21 @@ class LibraryPage(QWidget):
             if manual_data:
                 manual_pixmap.loadFromData(manual_data)
             paths = [] if not manual_pixmap.isNull() else list(collage_cache_files(artist["name"]))
-            for album in self._database.get_albums_for_artist(int(artist["id"])):
-                if album["title"] == "Pistas sueltas":
-                    continue
-                paths.append(cover_cache_path(album["title"], artist["name"]))
-                if album["cover_path"]:
-                    paths.append(Path(album["cover_path"]))
+            if artist["id"] is not None:
+                for album in self._database.get_albums_for_artist(int(artist["id"])):
+                    if album["title"] == "Pistas sueltas":
+                        continue
+                    paths.append(cover_cache_path(album["title"], artist["name"]))
+                    if album["cover_path"]:
+                        paths.append(Path(album["cover_path"]))
+            elif artist["album_id"] is not None:
+                album = self._database.get_album_by_id(int(artist["album_id"]))
+                if album is not None:
+                    paths.append(
+                        cover_cache_path(album["title"], artist["name"])
+                    )
+                    if album["cover_path"]:
+                        paths.append(Path(album["cover_path"]))
             covers = (
                 [manual_pixmap]
                 if not manual_pixmap.isNull()
@@ -196,7 +265,19 @@ class LibraryPage(QWidget):
                 f'{position}.  {artist["name"]}\n     {format_listening_time(seconds)} escuchados',
             )
             item.setSizeHint(QSize(0, 70))
-            item.setData(Qt.ItemDataRole.UserRole, int(artist["id"]))
+            item.setData(
+                Qt.ItemDataRole.UserRole,
+                {
+                    "artist_id": (
+                        int(artist["id"]) if artist["id"] is not None else None
+                    ),
+                    "album_id": (
+                        int(artist["album_id"])
+                        if artist["album_id"] is not None else None
+                    ),
+                    "is_compilation": bool(artist["is_compilation"]),
+                },
+            )
             item.setToolTip(f'Ir a {artist["name"]}')
             self.top_artists.addItem(item)
 
@@ -277,9 +358,9 @@ class LibraryPage(QWidget):
             self.play_requested.emit(payload)
 
     def _open_top_artist(self, item: QListWidgetItem) -> None:
-        artist_id = item.data(Qt.ItemDataRole.UserRole)
-        if artist_id is not None:
-            self.artist_requested.emit(int(artist_id))
+        destination = item.data(Qt.ItemDataRole.UserRole)
+        if destination:
+            self.artist_requested.emit(destination)
 
     def _top_track_menu(self, position: object) -> None:
         item = self.top_tracks.itemAt(position)
@@ -314,3 +395,12 @@ def format_listening_time(seconds: int) -> str:
     if minutes:
         return f"{minutes} min {remaining_seconds:02d} s"
     return f"{remaining_seconds} s"
+
+
+def format_library_duration(seconds: float) -> str:
+    total_hours = max(0.0, float(seconds or 0) / 3600)
+    if total_hours < 24:
+        return f"{total_hours:.1f} h"
+    days = int(total_hours // 24)
+    hours = round(total_hours - days * 24)
+    return f"{days} d {hours} h"

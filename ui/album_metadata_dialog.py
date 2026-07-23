@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 
 from config import APP_VERSION
 from database.manager import DatabaseManager
+from library.network_policy import internet_access_allowed
 
 
 class AlbumMetadataDialog(QDialog):
@@ -87,6 +88,11 @@ class AlbumMetadataDialog(QDialog):
 
     def search(self) -> None:
         self.releases.clear()
+        if not internet_access_allowed():
+            self.status.setText(
+                "Las búsquedas en internet están desactivadas en Configuración."
+            )
+            return
         self.status.setText("Buscando ediciones musicales…")
         artist = self.album["artist_name"] or self.album["album_artist"]
         url = QUrl("https://musicbrainz.org/ws/2/release/")

@@ -19,6 +19,7 @@ from library.cover_art import (
     select_original_album_groups,
 )
 from library.manual_art import is_manual_album_cover, read_image
+from library.network_policy import internet_access_allowed
 
 
 USER_AGENT = f"VinqeloPlayer/{APP_VERSION} (desktop music library)"
@@ -53,6 +54,12 @@ class ArtistCollageService(QObject):
     ) -> None:
         if title == "Pistas sueltas":
             return
+        if not internet_access_allowed():
+            data = _read_image(Path(local_cover)) if local_cover else None
+            if data:
+                self.album_cover_ready.emit(album_id, data)
+                self.cover_ready.emit(artist, data)
+            return
         key = f"album\0{artist.casefold()}\0{title.casefold()}"
         cache = cover_cache_path(title, artist)
         data = _read_image(cache)
@@ -73,6 +80,8 @@ class ArtistCollageService(QObject):
 
     def request(self, artist: str) -> None:
         """Busca discografía cuando el artista solo tiene Pistas sueltas."""
+        if not internet_access_allowed():
+            return
         key = f"collage\0{artist.casefold()}"
         cached = collage_cache_files(artist)
         for path in cached[:4]:
@@ -87,6 +96,10 @@ class ArtistCollageService(QObject):
             self._start_next()
 
     def _start_next(self) -> None:
+        if not internet_access_allowed():
+            self._queue.clear()
+            self._active = False
+            return
         if self._active or not self._queue:
             return
         elapsed = int((time.monotonic() - self._last_search) * 1000)

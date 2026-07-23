@@ -7,7 +7,13 @@ from PySide6.QtWidgets import QLabel, QLineEdit, QMenu, QTreeWidget, QTreeWidget
 
 from database.manager import DatabaseManager
 from ui.icons import navigation_icon
-from ui.pages.collection_pages import _play_payload, _queue, mark_playing_track
+from ui.i18n import translate_text
+from ui.pages.collection_pages import (
+    _play_payload,
+    _queue,
+    connect_track_click,
+    mark_playing_track,
+)
 
 
 class SearchPage(QWidget):
@@ -43,7 +49,7 @@ class SearchPage(QWidget):
         self.results.setAlternatingRowColors(True)
         self.results.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.results.customContextMenuRequested.connect(self._context_menu)
-        self.results.itemDoubleClicked.connect(self._play)
+        connect_track_click(self.results, self._play)
         self.results.setColumnWidth(0, 330)
         self.results.setColumnWidth(1, 210)
         self.results.setColumnWidth(2, 300)
@@ -77,7 +83,14 @@ class SearchPage(QWidget):
         self.results.clear()
         for row in self.database.search_tracks(text):
             artist = row["track_artist"] if row["is_compilation"] else row["artist_name"]
-            item = QTreeWidgetItem([row["title"], artist, row["album_title"], row["file_format"]])
+            item = QTreeWidgetItem(
+                [
+                    row["title"],
+                    artist,
+                    translate_text(str(row["album_title"])),
+                    row["file_format"],
+                ]
+            )
             context = {
                 "artist_id": row["artist_id"], "album_id": row["album_id"],
                 "is_compilation": bool(row["is_compilation"]), "file_path": row["file_path"],

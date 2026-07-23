@@ -35,6 +35,7 @@ class Sidebar(QFrame):
         self.setFixedWidth(226)
         self._buttons: dict[str, QPushButton] = {}
         self._icon_kinds: dict[str, str] = {}
+        self._theme = "vinqelo"
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 14, 12, 14)
@@ -79,13 +80,13 @@ class Sidebar(QFrame):
         self._add_group(layout, "REPRODUCCIÓN", self.PLAYBACK_SECTIONS)
 
         layout.addStretch(1)
-        about_button = QPushButton("Acerca de")
-        about_button.setObjectName("aboutButton")
-        about_button.setIcon(navigation_icon("info"))
-        about_button.setIconSize(NAV_ICON_SIZE)
-        about_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        about_button.clicked.connect(self.about_requested.emit)
-        layout.addWidget(about_button)
+        self._about_button = QPushButton("Acerca de")
+        self._about_button.setObjectName("aboutButton")
+        self._about_button.setIcon(navigation_icon("info"))
+        self._about_button.setIconSize(NAV_ICON_SIZE)
+        self._about_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._about_button.clicked.connect(self.about_requested.emit)
+        layout.addWidget(self._about_button)
         version_label = QLabel(f"Vinqelo Player  ·  {APP_VERSION}")
         version_label.setObjectName("mutedLabel")
         version_label.setStyleSheet("font-size: 10px;")
@@ -128,16 +129,37 @@ class Sidebar(QFrame):
         button = self._buttons.get(section)
         return bool(button and button.property("active"))
 
+    def apply_theme(self, theme: str) -> None:
+        """Mantiene legibles el texto y los iconos sobre el fondo lateral."""
+        self._theme = theme
+        inactive_color = "#e4ebf2" if theme == "musicmatch" else "#8fa7c7"
+        self._about_button.setIcon(navigation_icon("info", inactive_color))
+        for key, button in self._buttons.items():
+            active = bool(button.property("active"))
+            button.setIcon(
+                navigation_icon(
+                    self._icon_kinds[key],
+                    "#8fd0ff" if active and theme == "musicmatch"
+                    else "#4b9aff" if active
+                    else inactive_color,
+                )
+            )
+
     def select(self, section: str, *, emit_signal: bool = True) -> None:
         if section not in self._buttons:
             return
+        inactive_color = (
+            "#e4ebf2" if self._theme == "musicmatch" else "#8fa7c7"
+        )
         for key, button in self._buttons.items():
             is_active = key == section
             button.setProperty("active", is_active)
             button.setIcon(
                 navigation_icon(
                     self._icon_kinds[key],
-                    "#4b9aff" if is_active else "#8fa7c7",
+                    "#8fd0ff" if is_active and self._theme == "musicmatch"
+                    else "#4b9aff" if is_active
+                    else inactive_color,
                 )
             )
             button.style().unpolish(button)

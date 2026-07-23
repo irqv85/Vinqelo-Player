@@ -35,7 +35,7 @@ class LoadingBanner(QFrame):
         self._message_index = 0
         self.setObjectName("loadingBanner")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
-        self.setFixedSize(410, 154)
+        self.setFixedSize(410, 164)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(1, 1, 1, 1)
@@ -80,12 +80,12 @@ class LoadingBanner(QFrame):
         content.addLayout(copy, 1)
         panel_layout.addLayout(content)
 
-        progress = QProgressBar()
-        progress.setObjectName("loadingBannerProgress")
-        progress.setRange(0, 0)
-        progress.setTextVisible(False)
-        progress.setFixedHeight(5)
-        panel_layout.addWidget(progress)
+        self.progress = QProgressBar()
+        self.progress.setObjectName("loadingBannerProgress")
+        self.progress.setRange(0, 0)
+        self.progress.setTextVisible(False)
+        self.progress.setFixedHeight(18)
+        panel_layout.addWidget(self.progress)
 
         self.setStyleSheet(
             """
@@ -122,6 +122,11 @@ class LoadingBanner(QFrame):
                 background-color: #172743;
                 border: none;
                 border-radius: 0;
+                color: #ffffff;
+                font-family: "Segoe UI";
+                font-size: 10px;
+                font-weight: 700;
+                text-align: center;
             }
             QProgressBar#loadingBannerProgress::chunk {
                 background-color: #397fe2;
@@ -134,11 +139,18 @@ class LoadingBanner(QFrame):
         self._message_timer.timeout.connect(self._next_message)
         self.hide()
 
-    def start(self, messages: Sequence[str]) -> None:
+    def start(self, messages: Sequence[str], *, determinate: bool = False) -> None:
         self._messages = [translate_text(message) for message in messages if message]
         self._message_index = 0
         if self._messages:
             self.message.setText(self._messages[0])
+        if determinate:
+            self.progress.setRange(0, 100)
+            self.progress.setValue(0)
+            self.progress.setTextVisible(True)
+        else:
+            self.progress.setRange(0, 0)
+            self.progress.setTextVisible(False)
         self.center_banner()
         self.show()
         self.raise_()
@@ -149,6 +161,23 @@ class LoadingBanner(QFrame):
         self.center_banner()
         self.show()
         self.raise_()
+
+    def set_progress(self, current: int, total: int, item_name: str = "") -> None:
+        total = max(0, int(total))
+        current = max(0, int(current))
+        if total <= 0:
+            self.progress.setRange(0, 0)
+            self.progress.setTextVisible(False)
+            return
+        percent = max(0, min(100, round(current * 100 / total)))
+        self.progress.setRange(0, 100)
+        self.progress.setValue(percent)
+        self.progress.setFormat(f"{percent}%")
+        self.progress.setTextVisible(True)
+        if item_name:
+            self.message.setText(
+                translate_text("Revisando biblioteca…") + f"  {item_name}"
+            )
 
     def stop(self) -> None:
         self._message_timer.stop()

@@ -15,6 +15,7 @@ from PySide6.QtGui import QImage
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 from config import APP_VERSION, COVER_CACHE_DIR
+from library.network_policy import internet_access_allowed
 from library.track_metadata import TrackDetails
 
 
@@ -47,6 +48,10 @@ class CoverArtService(QObject):
         self._pending = None
         self._search_timer.stop()
 
+        if not internet_access_allowed():
+            QTimer.singleShot(0, lambda: self._emit_fallback(key, details))
+            return
+
         if details.album_artist == "Artista desconocido":
             QTimer.singleShot(0, lambda: self._emit_fallback(key, details))
             return
@@ -63,6 +68,9 @@ class CoverArtService(QObject):
                     return
             except OSError:
                 self._logger.warning("No se pudo leer la carátula en caché %s", cache_path)
+        if _checked_marker(cache_path).is_file():
+            QTimer.singleShot(0, lambda: self._emit_fallback(key, details))
+            return
 
         self._pending = (key, details, cache_path)
         elapsed_ms = int((time.monotonic() - self._last_search_started) * 1000)
@@ -73,6 +81,12 @@ class CoverArtService(QObject):
             self._start_pending_search()
 
     def _start_pending_search(self) -> None:
+        if not internet_access_allowed():
+            if self._pending is not None:
+                key, details, _cache_path = self._pending
+                self._pending = None
+                self._emit_fallback(key, details)
+            return
         if self._pending is None:
             return
         key, details, cache_path = self._pending
@@ -245,6 +259,7 @@ class CoverArtService(QObject):
         try:
             cache_path.parent.mkdir(parents=True, exist_ok=True)
             cache_path.write_bytes(data)
+            _checked_marker(cache_path).unlink(missing_ok=True)
         except OSError:
             self._logger.warning("No se pudo guardar la carátula en %s", cache_path, exc_info=True)
 
@@ -257,6 +272,18 @@ class CoverArtService(QObject):
             self.cover_ready.emit(key, details.cover_data, details.cover_origin or "Carátula incrustada")
         else:
             self.cover_unavailable.emit(key)
+        if (
+            internet_access_allowed()
+            and details.album_artist != "Artista desconocido"
+        ):
+            marker = _checked_marker(
+                cover_cache_path(details.album, details.album_artist)
+            )
+            try:
+                marker.parent.mkdir(parents=True, exist_ok=True)
+                marker.touch(exist_ok=True)
+            except OSError:
+                pass
 
     @staticmethod
     def _request(url: QUrl, *, accept: str) -> QNetworkRequest:
@@ -345,6 +372,21 @@ def clean_track_title(title: str, artist: str) -> str:
 def cover_cache_path(album: str, artist: str) -> Path:
     cache_key = f"album-exact-v2\0{artist.casefold()}\0{album.casefold()}".encode("utf-8")
     return COVER_CACHE_DIR / f"{hashlib.sha256(cache_key).hexdigest()}.img"
+
+
+def reset_checked_cover_results() -> None:
+    """Permite reintentar portadas faltantes solo al actualizar la biblioteca."""
+    if not COVER_CACHE_DIR.is_dir():
+        return
+    for marker in COVER_CACHE_DIR.glob("*.checked"):
+        try:
+            marker.unlink()
+        except OSError:
+            pass
+
+
+def _checked_marker(cache_path: Path) -> Path:
+    return cache_path.with_name(cache_path.name + ".checked")
 
 
 def _escape_lucene(value: str) -> str:

@@ -217,6 +217,9 @@ class PlayerController(QObject):
         duration = self._safe_length()
         target = max(0, min(int(milliseconds), duration if duration > 0 else int(milliseconds)))
         try:
+            was_stopped = self._state is PlaybackState.STOPPED
+            if was_stopped and not self.play():
+                return
             self._player.set_time(target)
             self.position_changed.emit(target, max(duration, target))
         except Exception as exc:
@@ -250,7 +253,10 @@ class PlayerController(QObject):
         try:
             self._equalizer.set_preamp(self._preamp_db)
             for index in range(10):
-                self._equalizer.set_amp_at_index(self._band_gains[index], index)
+                gain = self._band_gains[index]
+                self._equalizer.set_amp_at_index(
+                    max(-20.0, min(20.0, gain)), index
+                )
             if self._player.set_equalizer(self._equalizer) == -1:
                 raise RuntimeError("VLC rechazó el ajuste del ecualizador")
         except Exception as exc:

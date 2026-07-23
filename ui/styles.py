@@ -16,6 +16,25 @@ QMainWindow {
     background-color: transparent;
 }
 
+QMenuBar#classicMenuBar {
+    background-color: #0d1729;
+    border-bottom: 1px solid #263957;
+    color: #dce7f7;
+    spacing: 2px;
+}
+
+QMenuBar#classicMenuBar::item {
+    background-color: transparent;
+    color: #dce7f7;
+    padding: 7px 10px;
+}
+
+QMenuBar#classicMenuBar::item:selected,
+QMenuBar#classicMenuBar::item:pressed {
+    background-color: #1a2a45;
+    color: #ffffff;
+}
+
 QFrame#windowFrame,
 QWidget#contentArea,
 QStackedWidget {
@@ -464,7 +483,7 @@ QPushButton#toolbarIconPrimary {
     background-color: #17243a;
     border: 1px solid #304563;
     border-radius: 8px;
-    padding: 7px;
+    padding: 0;
 }
 
 QPushButton#toolbarIconPrimary {
@@ -1148,13 +1167,364 @@ THEME_PALETTES = {
         "#0e5fcf": "#475569", "#3b82f6": "#94a3b8", "#4b9aff": "#cbd5e1",
         "#438df5": "#94a3b8", "#1b477c": "#3b4b60",
     },
+    "musicmatch": {
+        "#176fe5": "#3f709d", "#3186f4": "#5d89b0", "#2583ff": "#4d7da8",
+        "#0e5fcf": "#315d87", "#3b82f6": "#4d7da8", "#4b9aff": "#7aa1c2",
+        "#438df5": "#527fa8", "#1b477c": "#6687a5",
+        "#0a1020": "#d7dfe7", "#10192b": "#506982", "#111c30": "#e4e9ee",
+        "#0f1829": "#edf1f4", "#111d31": "#e5ebf0",
+        "#15223a": "#c2ced9", "#0b1424": "#f3f6f8",
+        "#08101d": "#e8edf2", "#091322": "#f5f7f9", "#17243a": "#cbd6e0",
+        "#263650": "#9aabba", "#263957": "#91a3b4", "#304563": "#8fa2b4",
+        "#2a3d5c": "#91a3b4", "#e7edf7": "#21364a", "#dce7f7": "#2d4358",
+        "#c8d8ed": "#40576d", "#b5c7df": "#536b82", "#8fa7c7": "#4f6982",
+        "#8296b4": "#546b80", "#7890b0": "#597188",
+        "#f4f7fc": "#1f3449", "#8195b1": "#587086",
+    },
 }
+
+
+MUSICMATCH_STYLESHEET = """
+QDialog {
+    background-color: #d7dfe7;
+}
+
+QDialog#aboutDialog,
+QDialog#donationDialog {
+    background-color: #d7dfe7;
+    color: #23384c;
+}
+
+QDialog#aboutDialog QLabel,
+QDialog#donationDialog QLabel {
+    color: #23384c;
+}
+
+QDialog#aboutDialog QLabel#pageSubtitle,
+QDialog#donationDialog QLabel#pageSubtitle {
+    color: #40576d;
+}
+
+QDialog#aboutDialog QLabel#aboutDetails {
+    color: #23384c;
+}
+
+QDialog#aboutDialog QPlainTextEdit#aboutLicenseText {
+    background-color: #f3f6f8;
+    border: 1px solid #8fa2b4;
+    color: #23384c;
+    selection-background-color: #4d7da8;
+    selection-color: #ffffff;
+}
+
+QDialog#aboutDialog QPushButton#secondaryButton {
+    background-color: #c7d3de;
+    border-color: #8da2b5;
+    color: #243b50;
+}
+
+QDialog#aboutDialog QPushButton#secondaryButton:hover {
+    background-color: #b5c6d5;
+    border-color: #5d89b0;
+    color: #1f3449;
+}
+
+QDialog#aboutDialog QPushButton#secondaryButton:pressed {
+    background-color: #4d7da8;
+    border-color: #315d87;
+    color: #ffffff;
+}
+
+QDialog#donationDialog QTabWidget#donationTabs::pane {
+    background-color: #f3f6f8;
+    border: 1px solid #8fa2b4;
+}
+
+QDialog#donationDialog QTabWidget#donationTabs QTabBar::tab {
+    background-color: #dbe3ea;
+    border: 1px solid #9aabba;
+    color: #2d4358;
+}
+
+QDialog#donationDialog QTabWidget#donationTabs QTabBar::tab:hover {
+    background-color: #c7d5e1;
+    border-color: #6f8da8;
+    color: #1f3449;
+}
+
+QDialog#donationDialog QTabWidget#donationTabs QTabBar::tab:selected {
+    background-color: #3f709d;
+    border-color: #315d87;
+    color: #ffffff;
+}
+
+QDialog#donationDialog QLabel#donationMethodTitle {
+    color: #1c3146;
+}
+
+QDialog#donationDialog QLabel#donationData,
+QDialog#donationDialog QLabel#donationWarning {
+    background-color: #e5ebf0;
+    border: 1px solid #91a3b4;
+    color: #23384c;
+}
+
+QDialog#donationDialog QLineEdit#donationAddress {
+    background-color: #f6f8fa;
+    border: 1px solid #8fa2b4;
+    color: #20364a;
+    selection-background-color: #4d7da8;
+    selection-color: #ffffff;
+}
+
+QDialog#donationDialog QPushButton#donationPrimaryButton {
+    background-color: #3f709d;
+    border-color: #5d89b0;
+    color: #ffffff;
+}
+
+QDialog#donationDialog QPushButton#donationPrimaryButton:hover {
+    background-color: #315d87;
+    border-color: #7aa1c2;
+    color: #ffffff;
+}
+
+QDialog#donationDialog QPushButton#donationSecondaryButton {
+    background-color: #c7d3de;
+    border-color: #8da2b5;
+    color: #243b50;
+}
+
+QDialog#donationDialog QPushButton#donationSecondaryButton:hover {
+    background-color: #b5c6d5;
+    border-color: #5d89b0;
+    color: #1f3449;
+}
+
+QLabel#pageTitle,
+QLabel#statValue,
+QLabel#emptyTitle,
+QLabel#donationMethodTitle,
+QLabel#trackTitle {
+    color: #1c3146;
+}
+
+QLabel#pageSubtitle,
+QLabel#mutedLabel,
+QLabel#trackArtist,
+QLabel#trackAlbum,
+QLabel#trackMeta {
+    color: #536b82;
+}
+
+QFrame#sidebar QLabel#mutedLabel,
+QFrame#playerBar QLabel#mutedLabel,
+QFrame#playerBar QLabel#trackArtist,
+QFrame#playerBar QLabel#trackAlbum,
+QFrame#playerBar QLabel#trackMeta,
+QFrame#playerBar QLabel#trackTitle {
+    color: #dce7f7;
+}
+
+QFrame#sidebar QLabel#navGroup {
+    color: #d0dce7;
+}
+
+QFrame#sidebar QFrame#brandBlock {
+    background-color: #5f7890;
+    border-color: #8fa4b7;
+}
+
+QFrame#sidebar QLabel#brandCaption {
+    color: #e3ecf4;
+    font-weight: 600;
+}
+
+QFrame#sidebar QPushButton#navButton {
+    color: #e4ebf2;
+}
+
+QFrame#sidebar QPushButton#aboutButton {
+    background-color: transparent;
+    border-color: transparent;
+    color: #e4ebf2;
+}
+
+QFrame#sidebar QPushButton#aboutButton:hover {
+    background-color: #40576d;
+    border-color: #8fa4b7;
+    color: #ffffff;
+}
+
+QFrame#sidebar QPushButton#aboutButton:pressed {
+    background-color: #315d87;
+    border-color: #9bb0c2;
+    color: #ffffff;
+}
+
+QTreeWidget,
+QListWidget,
+QTableWidget,
+QPlainTextEdit,
+QTextEdit {
+    background-color: #f2f5f7;
+    alternate-background-color: #e5ebf0;
+    border-color: #97a9ba;
+    color: #23384c;
+}
+
+QTreeWidget::item {
+    color: #23384c;
+}
+
+QTreeWidget::item:selected {
+    background-color: #4d7da8;
+    color: #ffffff;
+}
+
+QHeaderView::section,
+QFrame#tableHeader {
+    background-color: #c2ced9;
+    border-color: #91a3b4;
+    color: #40576d;
+}
+
+QLineEdit,
+QComboBox,
+QSpinBox,
+QDoubleSpinBox {
+    background-color: #f6f8fa;
+    border-color: #8fa2b4;
+    color: #20364a;
+}
+
+QPushButton#toolbarIcon {
+    background-color: #c7d3de;
+    border-color: #8da2b5;
+}
+
+QPushButton#toolbarIcon:hover {
+    background-color: #b5c6d5;
+    border-color: #5d89b0;
+}
+
+QPushButton#secondaryButton {
+    background-color: #c7d3de;
+    border-color: #8da2b5;
+    color: #243b50;
+}
+
+QPushButton#secondaryButton:hover {
+    background-color: #b5c6d5;
+    border-color: #5d89b0;
+    color: #1f3449;
+}
+
+QPushButton#secondaryButton:pressed {
+    background-color: #4d7da8;
+    border-color: #315d87;
+    color: #ffffff;
+}
+
+QFrame#libraryPanel,
+QFrame#emptyCard,
+QFrame#statCard {
+    background-color: #edf1f4;
+    border-color: #9aabba;
+}
+
+QFrame#playerBar {
+    background-color: #526b82;
+    border-top-color: #7f94a7;
+}
+
+QFrame#playerBar QFrame#trackPanel {
+    background-color: #40576d;
+    border-color: #7890a6;
+}
+
+QFrame#playerBar QFrame#trackPanel:hover {
+    background-color: #48627a;
+    border-color: #9bb0c2;
+}
+
+QFrame#playerBar QLabel#columnHeader,
+QFrame#playerBar QLabel#trackQuality {
+    color: #d7e2ec;
+}
+
+QFrame#playerBar QPushButton#playerButton,
+QFrame#playerBar QPushButton#modeButton {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+QFrame#playerBar QPushButton#playerButton:hover,
+QFrame#playerBar QPushButton#modeButton:hover {
+    background-color: #40576d;
+    border-color: #8298ab;
+}
+
+QFrame#playerBar QSlider::groove:horizontal {
+    background-color: #91a4b5;
+}
+
+QListWidget#artistGrid::item:selected,
+QListWidget#albumGrid::item:selected,
+QListWidget#visualAlbumGrid::item:selected {
+    background-color: #4d7da8;
+    color: #ffffff;
+}
+
+QListWidget#artistGrid::item:hover,
+QListWidget#albumGrid::item:hover,
+QListWidget#visualAlbumGrid::item:hover {
+    background-color: #c5d3df;
+    color: #1f3449;
+}
+
+QListWidget#artistGrid::item:selected:hover,
+QListWidget#albumGrid::item:selected:hover,
+QListWidget#visualAlbumGrid::item:selected:hover {
+    background-color: #4d7da8;
+    color: #ffffff;
+}
+
+QListWidget#listeningArtists::item {
+    color: #23384c;
+}
+
+QListWidget#listeningArtists::item:hover {
+    background-color: #c5d3df;
+    color: #1f3449;
+}
+
+QListWidget#listeningArtists::item:selected,
+QListWidget#listeningArtists::item:selected:hover {
+    background-color: #4d7da8;
+    color: #ffffff;
+}
+
+QScrollBar::handle:vertical,
+QScrollBar::handle:horizontal {
+    background-color: #587fa3;
+}
+
+QScrollBar::handle:vertical:hover,
+QScrollBar::handle:vertical:pressed,
+QScrollBar::handle:horizontal:hover,
+QScrollBar::handle:horizontal:pressed {
+    background-color: #3f6f9b;
+}
+"""
 
 
 def build_stylesheet(theme: str = "vinqelo", font_size: int = 13) -> str:
     stylesheet = APP_STYLESHEET
     for source, target in THEME_PALETTES.get(theme, {}).items():
         stylesheet = stylesheet.replace(source, target)
+    if theme == "musicmatch":
+        stylesheet += MUSICMATCH_STYLESHEET
     delta = max(11, min(17, int(font_size))) - 13
     if delta:
         stylesheet = re.sub(

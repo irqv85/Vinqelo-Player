@@ -13,7 +13,9 @@ from PySide6.QtWidgets import (
 )
 
 from config import APP_VERSION
+from library.network_policy import internet_access_allowed
 from ui.icons import navigation_icon
+from ui.i18n import translate_text
 
 
 class OnlineArtworkDialog(QDialog):
@@ -195,5 +197,16 @@ def _normalized(value: str) -> str:
 
 
 def choose_online_artwork(parent: QWidget, query: str, *, kind: str, artist: str = "") -> bytes | None:
+    if not internet_access_allowed():
+        from PySide6.QtWidgets import QMessageBox
+
+        QMessageBox.information(
+            parent,
+            translate_text("Modo local"),
+            translate_text(
+                "Las búsquedas en internet están desactivadas en Configuración."
+            ),
+        )
+        return None
     dialog = OnlineArtworkDialog(parent, query, kind=kind, artist=artist)
     return dialog.selected_data() if dialog.exec() == QDialog.DialogCode.Accepted else None

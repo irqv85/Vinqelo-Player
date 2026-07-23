@@ -15,6 +15,7 @@ from library.manual_art import save_manual_album_cover, save_manual_album_data
 from ui.artwork_dialog import choose_artwork, show_artwork
 from ui.online_artwork_dialog import choose_online_artwork
 from ui.icons import navigation_icon
+from ui.i18n import translate_text
 from ui.pages.collection_pages import (
     _album_pixmap,
     _play_payload,
@@ -22,6 +23,7 @@ from ui.pages.collection_pages import (
     _track_item,
     _primary_artist_pixmap,
     _total_duration,
+    connect_track_click,
     mark_playing_track,
 )
 
@@ -136,7 +138,7 @@ class AlbumGridPage(QWidget):
         self.tracks.setAlternatingRowColors(True)
         self.tracks.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tracks.customContextMenuRequested.connect(self._context_menu)
-        self.tracks.itemDoubleClicked.connect(self._play_track)
+        connect_track_click(self.tracks, self._play_track)
         self.tracks.setColumnWidth(0, 48)
         self.tracks.setColumnWidth(1, 390)
         self.tracks.setColumnWidth(2, 220)
@@ -274,7 +276,7 @@ class AlbumGridPage(QWidget):
         album_id = int(item.data(Qt.ItemDataRole.UserRole))
         self._current_album_id = album_id
         album = next(row for row in self.database.get_albums(self.compilations) if row["id"] == album_id)
-        self.album_heading.setText(album["title"])
+        self.album_heading.setText(translate_text(str(album["title"])))
         self.artist_heading.setText(album["artist_name"] or album["album_artist"])
         self.track_search.clear()
         self._fill_tracks(album_id)

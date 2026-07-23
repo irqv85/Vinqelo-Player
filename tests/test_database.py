@@ -106,6 +106,51 @@ class DatabaseManagerTests(unittest.TestCase):
                     "roots": 0,
                 },
             )
+            self.assertEqual(
+                database.get_media_summary(),
+                {"total_duration": 0, "formats": []},
+            )
+
+    def test_media_summary_groups_formats_and_estimates_average_bitrate(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            database = DatabaseManager(
+                Path(temporary_directory) / "library.sqlite3"
+            )
+            database.initialize()
+            connection = database.connect()
+            try:
+                root = connection.execute(
+                    "INSERT INTO library_roots(folder_path) VALUES (?)",
+                    ("C:/Music",),
+                ).lastrowid
+                artist = connection.execute(
+                    "INSERT INTO artists(root_id,name,folder_path) VALUES (?,?,?)",
+                    (root, "Artista", "C:/Music/Artista"),
+                ).lastrowid
+                album = connection.execute(
+                    """INSERT INTO albums
+                       (artist_id,title,album_artist,folder_path)
+                       VALUES (?,?,?,?)""",
+                    (artist, "Álbum", "Artista", "C:/Music/Artista/Album"),
+                ).lastrowid
+                connection.execute(
+                    """INSERT INTO tracks
+                       (album_id,title,track_artist,file_path,duration,
+                        file_format,file_size)
+                       VALUES (?,?,?,?,?,?,?)""",
+                    (
+                        album, "Tema", "Artista", "C:/Music/tema.mp3",
+                        100.0, "mp3", 2_000_000,
+                    ),
+                )
+                connection.commit()
+            finally:
+                connection.close()
+            summary = database.get_media_summary()
+            self.assertEqual(summary["total_duration"], 100.0)
+            self.assertEqual(summary["formats"][0]["file_format"], "MP3")
+            self.assertEqual(summary["formats"][0]["track_count"], 1)
+            self.assertEqual(round(summary["formats"][0]["average_bitrate"]), 160)
 
     def test_search_finds_title_artist_and_album(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

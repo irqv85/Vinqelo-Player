@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from player.controller import PlayerController
+from ui.i18n import translate_text
 
 
 FREQUENCIES = (31.25, 62.5, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0)
@@ -98,7 +99,11 @@ class EffectsDialog(QDialog):
         root.setSpacing(10)
         title = QLabel("Consola de sonido")
         title.setObjectName("pageTitle")
-        subtitle = QLabel("Preamplificador y ecualizador configurable de 6 bandas sobre VLC.")
+        subtitle = QLabel(
+            translate_text(
+                "Preamplificador y ecualizador configurable de 6 bandas."
+            )
+        )
         subtitle.setObjectName("pageSubtitle")
         root.addWidget(title)
         root.addWidget(subtitle)
@@ -234,6 +239,10 @@ class EffectsDialog(QDialog):
         for obsolete in (
             "effects/playback_rate", "effects/auto_preamp", "effects/low_db",
             "effects/high_db", "effects/treble_db",
+            "effects/super_bass", "effects/super_bass_db",
+            "effects/super_stereo", "effects/super_stereo_level",
+            "effects/tempo_enabled", "effects/tempo_rate",
+            "effects/speed_enabled", "effects/speed_rate",
         ):
             self.settings.remove(obsolete)
         self.preamp_slider.setValue(

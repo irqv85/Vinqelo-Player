@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS albums (
     cover_path TEXT,
     year INTEGER,
     is_compilation INTEGER NOT NULL DEFAULT 0 CHECK (is_compilation IN (0, 1)),
+    manual_is_compilation INTEGER CHECK (
+        manual_is_compilation IS NULL OR manual_is_compilation IN (0, 1)
+    ),
     date_added TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
 );

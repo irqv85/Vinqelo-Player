@@ -4,10 +4,18 @@ from __future__ import annotations
 
 from PySide6.QtCore import QTimer, Qt, Signal
 from PySide6.QtGui import QShowEvent
-from PySide6.QtWidgets import QLabel, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QLabel,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 from database.manager import DatabaseManager
 from ui.i18n import translate_text
+from ui.pages.collection_pages import connect_track_click
 
 
 class QueuePage(QWidget):
@@ -37,7 +45,7 @@ class QueuePage(QWidget):
         self.tree.setRootIsDecorated(False)
         self.tree.setAlternatingRowColors(True)
         self.tree.setUniformRowHeights(True)
-        self.tree.itemDoubleClicked.connect(self._play)
+        connect_track_click(self.tree, self._play)
         self.tree.setColumnWidth(0, 110)
         self.tree.setColumnWidth(1, 330)
         self.tree.setColumnWidth(2, 210)
@@ -74,7 +82,6 @@ class QueuePage(QWidget):
         self._render_scheduled = False
         if not self.isVisible():
             return
-        scroll_position = self.tree.verticalScrollBar().value()
         self.tree.setUpdatesEnabled(False)
         try:
             self.tree.clear()
@@ -124,7 +131,6 @@ class QueuePage(QWidget):
             self._emphasize_current()
         finally:
             self.tree.setUpdatesEnabled(True)
-        self.tree.verticalScrollBar().setValue(scroll_position)
 
     def _status(self, index: int) -> str:
         if index < self._current_index:
@@ -154,6 +160,9 @@ class QueuePage(QWidget):
         font.setBold(True)
         item.setFont(1, font)
         self.tree.setCurrentItem(item)
+        self.tree.scrollToItem(
+            item, QAbstractItemView.ScrollHint.PositionAtCenter
+        )
 
     def _play(self, item: QTreeWidgetItem, _column: int) -> None:
         index = item.data(0, Qt.ItemDataRole.UserRole)

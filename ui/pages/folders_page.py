@@ -14,7 +14,13 @@ from PySide6.QtWidgets import (
 from database.manager import DatabaseManager
 from ui.album_metadata_dialog import AlbumMetadataDialog
 from ui.icons import library_folder_icon, navigation_icon
-from ui.pages.collection_pages import _play_payload, _queue, mark_playing_track
+from ui.i18n import translate_text
+from ui.pages.collection_pages import (
+    _play_payload,
+    _queue,
+    connect_track_click,
+    mark_playing_track,
+)
 
 
 class FoldersPage(QWidget):
@@ -88,7 +94,7 @@ class FoldersPage(QWidget):
         self.tracks.setColumnWidth(0, 45)
         self.tracks.setColumnWidth(1, 350)
         self.tracks.setColumnWidth(2, 220)
-        self.tracks.itemDoubleClicked.connect(self._play_track)
+        connect_track_click(self.tracks, self._play_track)
         self.tracks.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tracks.customContextMenuRequested.connect(self._track_menu)
         layout.addWidget(self.track_heading)
@@ -137,7 +143,11 @@ class FoldersPage(QWidget):
         }.get(theme, "#438df5")
         icon = library_folder_icon(accent)
         for row, node_kind in nodes:
-            name = row["title"] if node_kind == "album" else Path(row["folder_path"]).name
+            name = (
+                translate_text(str(row["title"]))
+                if node_kind == "album"
+                else Path(row["folder_path"]).name
+            )
             item = QListWidgetItem(icon, f'{name}\n{int(row["track_count"] or 0)} pistas')
             item.setData(Qt.ItemDataRole.UserRole, (node_kind, int(row["id"])))
             item.setData(Qt.ItemDataRole.UserRole + 1, dict(row))

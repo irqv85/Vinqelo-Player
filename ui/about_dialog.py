@@ -30,6 +30,7 @@ from ui.i18n import translate_text
 class AboutDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.setObjectName("aboutDialog")
         self.setWindowTitle(f"{translate_text('Acerca de')} {APP_NAME}")
         self.setModal(True)
         self.setMinimumWidth(440)
@@ -71,6 +72,7 @@ class AboutDialog(QDialog):
             f"Copyright © 2026 {APP_AUTHOR}.<br><br>"
             f"{translate_text('Software libre, distribuido sin garantía, conforme a los términos de la licencia.')}"
         )
+        details.setObjectName("aboutDetails")
         details.setTextFormat(Qt.TextFormat.RichText)
         details.setWordWrap(True)
         layout.addWidget(details)

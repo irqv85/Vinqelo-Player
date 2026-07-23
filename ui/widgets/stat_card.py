@@ -22,5 +22,5 @@ class StatCard(QFrame):
         layout.addWidget(self.value_label)
         layout.addWidget(caption)
 
-    def set_value(self, value: int) -> None:
+    def set_value(self, value: object) -> None:
         self.value_label.setText(str(value))

@@ -10,7 +10,7 @@
 
 ## Archivo para Partner Center
 
-Subir `dist/Vinqelo Player 0.7.0 Store x64.msix` en **Enviar el producto >
+Subir `dist/Vinqelo Player 0.7.2 Store x64.msix` en **Enviar el producto >
 Paquetes**. Microsoft Store firma el paquete durante la publicacion.
 
 En **Opciones de envio**, explicar `runFullTrust` asi:

@@ -19,6 +19,7 @@ from PySide6.QtCore import (
     Qt,
 )
 from PySide6.QtGui import (
+    QAction,
     QCloseEvent,
     QIcon,
     QKeySequence,
@@ -38,6 +39,8 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QLineEdit,
     QMainWindow,
+    QMenu,
+    QMenuBar,
     QMessageBox,
     QPushButton,
     QScrollBar,
@@ -49,7 +52,9 @@ from PySide6.QtWidgets import (
 
 from config import ASSETS_DIR
 from database.manager import DatabaseManager
-from library.cover_art import CoverArtService
+from library.cover_art import CoverArtService, cover_cache_path, reset_checked_cover_results
+from library.manual_art import read_image
+from library.network_policy import internet_access_allowed
 from library.scanner import (
     LibraryRootsSyncWorker,
     LibraryScanWorker,
@@ -60,6 +65,7 @@ from player.windows_media_session import WindowsMediaSession
 from ui.effects_dialog import EffectsDialog
 from ui.about_dialog import AboutDialog
 from ui.loading_banner import LoadingBanner
+from ui.library_export_dialog import LibraryExportController
 from ui.icons import navigation_icon, window_control_icon
 from ui.i18n import translate_text
 from ui.pages.album_page import AlbumGridPage
@@ -94,6 +100,9 @@ class MainWindow(QMainWindow):
         self._player_error_message = ""
         self._cover_art = CoverArtService(self)
         self._settings = QSettings("Vinqelo", "Vinqelo Player")
+        self._active_theme = str(
+            self._settings.value("appearance/theme", "vinqelo")
+        )
         self._mask_timer = QTimer(self)
         self._mask_timer.setSingleShot(True)
         self._mask_timer.setInterval(35)
@@ -139,6 +148,8 @@ class MainWindow(QMainWindow):
         saved_geometry = self._settings.value("window/geometry")
         if saved_geometry:
             self.restoreGeometry(saved_geometry)
+        self._library_export = LibraryExportController(database, self)
+        self._create_application_menu()
 
         root = QFrame()
         root.setObjectName("windowFrame")
@@ -194,12 +205,16 @@ class MainWindow(QMainWindow):
         self._loading_banner = LoadingBanner(self)
 
         self._create_window_controls(root)
+        self._apply_theme_icons(self._active_theme)
 
         self.sidebar.section_selected.connect(self.show_section)
         self.sidebar.about_requested.connect(self._show_about)
         self.library_page.add_folder_requested.connect(self.select_folder)
         self.library_page.update_library_requested.connect(self.update_library)
         self.library_page.open_file_requested.connect(self.open_audio_file)
+        self.library_page.export_library_requested.connect(
+            self._library_export.start
+        )
         self.library_page.play_requested.connect(self._play_library_items)
         self.library_page.enqueue_requested.connect(self._enqueue_library_item)
         self.library_page.artist_requested.connect(self._open_artist_from_dashboard)
@@ -295,6 +310,100 @@ class MainWindow(QMainWindow):
         self.minimize_button.clicked.connect(self.showMinimized)
         self.maximize_button.clicked.connect(self._toggle_maximized)
         self.close_button.clicked.connect(self.close)
+
+    def _apply_theme_icons(self, theme: str) -> None:
+        self._active_theme = theme
+        color = "#40576d" if theme == "musicmatch" else "#dce8f8"
+        self.settings_button.setIcon(navigation_icon("settings", color))
+        self.minimize_button.setIcon(window_control_icon("minimize", color))
+        maximize_kind = "restore" if self.isMaximized() else "maximize"
+        self.maximize_button.setIcon(window_control_icon(maximize_kind, color))
+        self.close_button.setIcon(window_control_icon("close", color))
+        self.sidebar.apply_theme(theme)
+        self.library_page.apply_theme(theme)
+
+    def _create_application_menu(self) -> None:
+        bar = self.menuBar()
+        bar.setObjectName("classicMenuBar")
+        bar.setContentsMargins(4, 0, 160, 0)
+        bar.installEventFilter(self)
+        bar.setMouseTracking(True)
+        self._menu_titles: dict[QMenu, str] = {}
+
+        def menu(source: str) -> QMenu:
+            value = bar.addMenu(translate_text(source))
+            self._menu_titles[value] = source
+            return value
+
+        def action(parent: QMenu, source: str, callback: object) -> QAction:
+            value = parent.addAction(translate_text(source))
+            value.triggered.connect(callback)
+            return value
+
+        file_menu = menu("Archivo")
+        action(file_menu, "Abrir un archivo", self.open_audio_file)
+        action(file_menu, "Agregar raíz de biblioteca", self.select_folder)
+        action(file_menu, "Actualizar biblioteca", self.update_library)
+        action(file_menu, "Exportar biblioteca", self._library_export.start)
+        file_menu.addSeparator()
+        action(file_menu, "Salir", self.close)
+
+        edit_menu = menu("Editar")
+        action(edit_menu, "Buscar", lambda: self.show_section("search"))
+        action(edit_menu, "Configuración", self._show_settings)
+
+        playback_menu = menu("Reproducción")
+        action(playback_menu, "Anterior", lambda: self._run_media_action("previous"))
+        action(playback_menu, "Reproducir", lambda: self._run_media_action("play_pause"))
+        action(playback_menu, "Detener", lambda: self._run_media_action("stop"))
+        action(playback_menu, "Siguiente", lambda: self._run_media_action("next"))
+
+        view_menu = menu("Ver")
+        for source, section in (
+            ("Biblioteca", "library"),
+            ("Artistas", "artists"),
+            ("Álbumes", "albums"),
+            ("Compilaciones", "compilations"),
+            ("Carpetas", "folders"),
+            ("Cola de reproducción", "queue"),
+        ):
+            action(view_menu, source, lambda _checked=False, key=section: self.show_section(key))
+        view_menu.addSeparator()
+        self._menu_toggle_action = action(
+            view_menu, "Ocultar barra de menú", lambda: self._set_menu_bar_visible(False)
+        )
+
+        help_menu = menu("Ayuda")
+        action(help_menu, "Acerca de", self._show_about)
+
+        visible = self._settings.value(
+            "appearance/show_menu_bar", False, type=bool
+        )
+        bar.setVisible(visible)
+
+    def _set_menu_bar_visible(self, visible: bool) -> None:
+        self.menuBar().setVisible(bool(visible))
+        self._settings.setValue("appearance/show_menu_bar", bool(visible))
+        self._settings.sync()
+
+    def _show_top_context_menu(self, global_position: object) -> None:
+        menu = QMenu(self)
+        visible = self.menuBar().isVisible()
+        toggle = menu.addAction(
+            translate_text(
+                "Ocultar barra de menú" if visible else "Mostrar barra de menú"
+            )
+        )
+        settings = menu.addAction(translate_text("Configuración"))
+        selected = menu.exec(global_position)
+        if selected == toggle:
+            self._set_menu_bar_visible(not visible)
+        elif selected == settings:
+            self._show_settings()
+
+    def _retranslate_application_menu(self) -> None:
+        for menu, source in self._menu_titles.items():
+            menu.setTitle(translate_text(source))
         self.window_controls.raise_()
 
     def _initialize_player(self) -> None:
@@ -348,12 +457,14 @@ class MainWindow(QMainWindow):
             return
         application = QApplication.instance()
         if application is not None:
+            theme = str(values.get("theme", "vinqelo"))
             application.setStyleSheet(
                 build_stylesheet(
-                    str(values.get("theme", "vinqelo")),
+                    theme,
                     int(values.get("font_size", 13)),
                 )
             )
+            self._apply_theme_icons(theme)
             translation_manager = getattr(
                 application, "_vinqelo_translation_manager", None
             )
@@ -365,11 +476,34 @@ class MainWindow(QMainWindow):
                 # el idioma recién elegido.
                 self.smart_playlists_page.refresh()
                 self.folders_page.refresh()
+                self._retranslate_application_menu()
+        if "show_menu_bar" in values:
+            self._set_menu_bar_visible(bool(values["show_menu_bar"]))
 
     def _handle_track_details(self, details: TrackDetails) -> None:
         self.player_bar.set_track_details(details)
         if self._windows_media_session is not None:
             self._windows_media_session.set_track_details(details)
+        if not internet_access_allowed():
+            row = self._database.get_track_by_path(str(details.file_path))
+            if row is not None:
+                artist = row["track_artist"] if row["is_compilation"] else row["artist_name"]
+                candidates = [
+                    Path(row["cover_path"]) if row["cover_path"] else None,
+                    cover_cache_path(str(row["album_title"]), str(artist or "")),
+                ]
+                for candidate in candidates:
+                    data = read_image(candidate) if candidate is not None else None
+                    if data:
+                        self.player_bar.set_cover_data(
+                            str(details.file_path),
+                            data,
+                            "Carátula oficial de la biblioteca",
+                        )
+                        self._handle_windows_cover(
+                            str(details.file_path), data, "Carátula oficial de la biblioteca"
+                        )
+                        return
         self._cover_art.request_cover(details)
 
     def _handle_online_metadata(self, file_path: str, details: TrackDetails) -> None:
@@ -397,7 +531,24 @@ class MainWindow(QMainWindow):
         self._pages[key] = page
         self.stack.addWidget(page)
 
-    def _open_artist_from_dashboard(self, artist_id: int) -> None:
+    def _open_artist_from_dashboard(self, destination: object) -> None:
+        if isinstance(destination, dict) and destination.get("is_compilation"):
+            album_id = destination.get("album_id")
+            if album_id is None:
+                return
+            self._ensure_section_loaded("compilations")
+            self.stack.setCurrentWidget(self.compilations_page)
+            self.sidebar.select("compilations", emit_signal=False)
+            self.compilations_page.locate(int(album_id), "")
+            self.setWindowTitle("Vinqelo Player — Compilaciones")
+            return
+        artist_id = (
+            destination.get("artist_id")
+            if isinstance(destination, dict)
+            else destination
+        )
+        if artist_id is None:
+            return
         self._ensure_section_loaded("artists")
         self.stack.setCurrentWidget(self.artists_page)
         self.sidebar.select("artists", emit_signal=False)
@@ -443,6 +594,7 @@ class MainWindow(QMainWindow):
                 "La biblioteca ya se está actualizando.",
             )
             return
+        reset_checked_cover_results()
         registered = [Path(row["folder_path"]) for row in self._database.get_roots()]
         available = [path.resolve() for path in registered if path.is_dir()]
         unavailable = [path for path in registered if not path.is_dir()]
@@ -539,13 +691,18 @@ class MainWindow(QMainWindow):
                 "Validando cambios en la biblioteca…",
                 "Actualizando la colección…",
                 "Organizando los cambios detectados…",
-            ]
+            ],
+            determinate=True,
         )
 
         self._scan_thread = QThread(self)
-        self._scan_worker = LibraryScanWorker(folder_path)
+        scan_cache = self._database.get_scan_cache([str(folder_path.resolve())])
+        self._scan_worker = LibraryScanWorker(
+            folder_path, scan_cache, self._database
+        )
         self._scan_worker.moveToThread(self._scan_thread)
         self._scan_thread.started.connect(self._scan_worker.run)
+        self._scan_worker.progress.connect(self._loading_banner.set_progress)
         self._scan_worker.finished.connect(self._finish_library_import)
         self._scan_worker.failed.connect(self._fail_library_import)
         self._scan_worker.finished.connect(self._scan_worker.deleteLater)
@@ -553,11 +710,14 @@ class MainWindow(QMainWindow):
         self._scan_worker.finished.connect(self._scan_thread.quit)
         self._scan_worker.failed.connect(self._scan_thread.quit)
         self._scan_thread.finished.connect(self._cleanup_scan)
-        self._scan_thread.start()
+        self._scan_thread.start(QThread.Priority.LowPriority)
         self.library_page.show_selected_folder(folder_path)
         self._logger.info("Analizando biblioteca: %s", folder_path)
 
     def _finish_library_import(self, scan: object) -> None:
+        stored_result = None
+        if isinstance(scan, tuple) and len(scan) == 2:
+            scan, stored_result = scan
         registered_roots = {
             str(Path(row["folder_path"]).resolve())
             for row in self._database.get_roots()
@@ -574,10 +734,12 @@ class MainWindow(QMainWindow):
             )
             return
         try:
-            counts = self._database.synchronize_library_scan(scan)
-            prepared = self.artists_page.prepare_artist_thumbnails(force=True)
+            counts = (
+                stored_result
+                if isinstance(stored_result, dict)
+                else self._database.synchronize_library_scan(scan)
+            )
             self.artists_page.queue_artwork_updates()
-            self._logger.info("Miniaturas de artistas preparadas: %d", prepared)
             self._apply_sync_to_player(counts)
             self._refresh_library_pages()
             stats = self._database.get_library_stats()
@@ -622,9 +784,15 @@ class MainWindow(QMainWindow):
         if not roots:
             return
         self._sync_thread = QThread(self)
-        self._sync_worker = LibraryRootsSyncWorker(roots)
+        scan_cache = self._database.get_scan_cache(
+            [str(path.resolve()) for path in roots]
+        )
+        self._sync_worker = LibraryRootsSyncWorker(
+            roots, scan_cache, self._database
+        )
         self._sync_worker.moveToThread(self._sync_thread)
         self._sync_thread.started.connect(self._sync_worker.run)
+        self._sync_worker.progress.connect(self._loading_banner.set_progress)
         self._sync_worker.finished.connect(self._finish_library_sync)
         self._sync_worker.finished.connect(self._sync_worker.deleteLater)
         self._sync_worker.finished.connect(self._sync_thread.quit)
@@ -634,22 +802,29 @@ class MainWindow(QMainWindow):
                 "Validando cambios en la biblioteca…",
                 "Actualizando la colección…",
                 "Organizando los cambios detectados…",
-            ]
+            ],
+            determinate=True,
         )
-        self._sync_thread.start()
+        self._sync_thread.start(QThread.Priority.LowPriority)
         self._logger.info("Sincronizando %d raíz(es) de biblioteca", len(roots))
 
     def _finish_library_sync(self, scans: object, errors: object) -> None:
         moved: dict[str, str] = {}
         removed: list[str] = []
         try:
-            for scan in scans if isinstance(scans, list) else []:
-                result = self._database.synchronize_library_scan(scan)
+            for value in scans if isinstance(scans, list) else []:
+                if isinstance(value, tuple) and len(value) == 2:
+                    scan, stored_result = value
+                else:
+                    scan, stored_result = value, None
+                result = (
+                    stored_result
+                    if isinstance(stored_result, dict)
+                    else self._database.synchronize_library_scan(scan)
+                )
                 moved.update(result.get("moved_tracks", {}))
                 removed.extend(result.get("removed_tracks", []))
-            prepared = self.artists_page.prepare_artist_thumbnails(force=True)
             self.artists_page.queue_artwork_updates()
-            self._logger.info("Miniaturas de artistas preparadas: %d", prepared)
             if scans:
                 self._apply_sync_to_player(
                     {"moved_tracks": moved, "removed_tracks": removed}
@@ -1059,12 +1234,13 @@ class MainWindow(QMainWindow):
         AboutDialog(self).exec()
 
     def _toggle_maximized(self) -> None:
+        color = "#40576d" if self._active_theme == "musicmatch" else "#dce8f8"
         if self.isMaximized():
             self.showNormal()
-            self.maximize_button.setIcon(window_control_icon("maximize"))
+            self.maximize_button.setIcon(window_control_icon("maximize", color))
         else:
             self.showMaximized()
-            self.maximize_button.setIcon(window_control_icon("restore"))
+            self.maximize_button.setIcon(window_control_icon("restore", color))
 
     def _initialize_system_media(self) -> None:
         """Prefiere la sesión multimedia oficial de Windows sobre hotkeys globales."""
@@ -1276,6 +1452,15 @@ class MainWindow(QMainWindow):
             resize_edges = self._resize_edges(local_position)
 
             if (
+                event.type() == QEvent.Type.MouseButtonPress
+                and event.button() == Qt.MouseButton.RightButton
+                and in_drag_zone
+                and (not interactive or watched is self.menuBar())
+            ):
+                self._show_top_context_menu(event.globalPosition().toPoint())
+                return True
+
+            if (
                 event.type() == QEvent.Type.MouseMove
                 and event.buttons() == Qt.MouseButton.NoButton
             ):
@@ -1313,6 +1498,7 @@ class MainWindow(QMainWindow):
             QAbstractButton,
             QAbstractItemView,
             QLineEdit,
+            QMenuBar,
             QSlider,
             QScrollBar,
         )

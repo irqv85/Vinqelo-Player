@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (
 
 from database.manager import DatabaseManager
 from ui.pages.collection_pages import (
-    _play_payload, _queue, _total_duration, mark_playing_track,
+    _play_payload, _queue, _total_duration, connect_track_click,
+    mark_playing_track,
 )
 from ui.pages.library_page import format_listening_time
 from ui.playlist_export import PlaylistExportController
@@ -62,7 +63,7 @@ class SmartPlaylistsPage(QWidget):
         self.tracks.setColumnWidth(0, 330)
         self.tracks.setColumnWidth(1, 190)
         self.tracks.setColumnWidth(2, 260)
-        self.tracks.itemDoubleClicked.connect(self._play_track)
+        connect_track_click(self.tracks, self._play_track)
         self.tracks.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tracks.customContextMenuRequested.connect(self._context_menu)
         right.addLayout(heading_row)

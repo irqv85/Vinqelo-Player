@@ -33,6 +33,14 @@ class DatabaseManager:
             if columns and "artist_id" not in columns:
                 connection.execute("ALTER TABLE albums ADD COLUMN artist_id INTEGER")
             connection.executescript(schema)
+            album_columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(albums)").fetchall()
+            }
+            if "manual_is_compilation" not in album_columns:
+                connection.execute(
+                    "ALTER TABLE albums ADD COLUMN manual_is_compilation INTEGER"
+                )
             track_columns = {
                 row["name"]
                 for row in connection.execute("PRAGMA table_info(tracks)").fetchall()
@@ -164,7 +172,11 @@ class DatabaseManager:
                            ON CONFLICT(folder_path) DO UPDATE SET
                              artist_id=excluded.artist_id, title=excluded.title,
                              album_artist=excluded.album_artist, cover_path=excluded.cover_path,
-                             year=excluded.year, is_compilation=excluded.is_compilation""",
+                             year=excluded.year,
+                             is_compilation=COALESCE(
+                                 albums.manual_is_compilation,
+                                 excluded.is_compilation
+                             )""",
                         (
                             artist_id,
                             album.title,
@@ -300,6 +312,28 @@ class DatabaseManager:
             "roots": int(roots),
         }
 
+    def get_media_summary(self) -> dict[str, object]:
+        """Duración y distribución por formato sin volver a leer los archivos."""
+        rows = self.fetch_all(
+            """SELECT UPPER(file_format) AS file_format,
+               COUNT(*) AS track_count,
+               COALESCE(SUM(duration), 0) AS total_duration,
+               COALESCE(AVG(
+                   CASE WHEN duration > 0 AND file_size > 0
+                        THEN (file_size * 8.0) / duration / 1000.0
+                   END
+               ), 0) AS average_bitrate
+               FROM tracks
+               GROUP BY UPPER(file_format)
+               ORDER BY track_count DESC, file_format"""
+        )
+        return {
+            "total_duration": sum(
+                float(row["total_duration"] or 0) for row in rows
+            ),
+            "formats": rows,
+        }
+
     def get_artists(self) -> list[sqlite3.Row]:
         return self.fetch_all(
             """SELECT ar.*,
@@ -369,13 +403,18 @@ class DatabaseManager:
         try:
             cursor = connection.execute(
                 """UPDATE albums
-                   SET is_compilation=?,
+                   SET is_compilation=?, manual_is_compilation=?,
                        album_artist=CASE WHEN ?=1 THEN 'Varios artistas'
                            ELSE COALESCE((SELECT name FROM artists
                                           WHERE artists.id=albums.artist_id), album_artist)
                        END
                    WHERE id=?""",
-                (int(is_compilation), int(is_compilation), int(album_id)),
+                (
+                    int(is_compilation),
+                    int(is_compilation),
+                    int(is_compilation),
+                    int(album_id),
+                ),
             )
             if not cursor.rowcount:
                 raise ValueError("El álbum no pertenece a la biblioteca.")
@@ -389,13 +428,18 @@ class DatabaseManager:
         try:
             cursor = connection.execute(
                 """UPDATE albums
-                   SET is_compilation=?,
+                   SET is_compilation=?, manual_is_compilation=?,
                        album_artist=CASE WHEN ?=1 THEN 'Varios artistas'
                            ELSE COALESCE((SELECT name FROM artists
                                           WHERE artists.id=albums.artist_id), album_artist)
                        END
                    WHERE artist_id=?""",
-                (int(is_compilation), int(is_compilation), int(artist_id)),
+                (
+                    int(is_compilation),
+                    int(is_compilation),
+                    int(is_compilation),
+                    int(artist_id),
+                ),
             )
             connection.commit()
             return int(cursor.rowcount)
@@ -543,17 +587,47 @@ class DatabaseManager:
 
     def get_top_artists(self, limit: int = 6) -> list[sqlite3.Row]:
         return self.fetch_all(
-            """SELECT ar.id, ar.name, ar.folder_path,
+            """SELECT
+               CASE WHEN al.is_compilation=1 THEN NULL ELSE ar.id END AS id,
+               CASE WHEN al.is_compilation=1 THEN t.track_artist ELSE ar.name END AS name,
+               MIN(ar.folder_path) AS folder_path,
+               MAX(al.is_compilation) AS is_compilation,
+               MIN(CASE WHEN al.is_compilation=1 THEN al.id END) AS album_id,
                SUM(t.play_count) AS play_count,
                SUM(t.listen_seconds) AS listen_seconds
                FROM artists ar JOIN albums al ON al.artist_id=ar.id
                JOIN tracks t ON t.album_id=al.id
-               WHERE al.is_compilation=0 AND t.play_count>0
-               GROUP BY ar.id HAVING SUM(t.play_count) >= 3
+               WHERE t.play_count>0
+               GROUP BY
+                 CASE WHEN al.is_compilation=1 THEN t.track_artist ELSE ar.name END,
+                 CASE WHEN al.is_compilation=1 THEN 1 ELSE 0 END
+               HAVING SUM(t.play_count) >= 3
                ORDER BY listen_seconds DESC, play_count DESC, ar.name COLLATE NOCASE
                LIMIT ?""",
             (limit,),
         )
+
+    def get_scan_cache(self, root_paths: list[str]) -> dict[str, sqlite3.Row]:
+        """Datos suficientes para omitir metadatos y firmas de archivos sin cambios."""
+        if not root_paths:
+            return {}
+        result: dict[str, sqlite3.Row] = {}
+        for offset in range(0, len(root_paths), 700):
+            batch = root_paths[offset:offset + 700]
+            placeholders = ",".join("?" for _ in batch)
+            rows = self.fetch_all(
+                f"""SELECT t.file_path, t.title, t.track_artist, t.track_number,
+                    t.duration, t.file_format, t.file_size, t.modified_ns,
+                    t.file_signature, al.year AS album_year
+                    FROM tracks t
+                    JOIN albums al ON al.id=t.album_id
+                    JOIN artists ar ON ar.id=al.artist_id
+                    JOIN library_roots lr ON lr.id=ar.root_id
+                    WHERE lr.folder_path IN ({placeholders})""",
+                tuple(batch),
+            )
+            result.update({str(row["file_path"]): row for row in rows})
+        return result
 
     def get_top_tracks(self, limit: int = 10) -> list[sqlite3.Row]:
         return self.fetch_all(
@@ -618,6 +692,35 @@ class DatabaseManager:
                 tuple(batch),
             )
             result.update({str(row["file_path"]): row for row in rows})
+        return result
+
+    def get_tracks_for_export(
+        self, album_ids: list[int]
+    ) -> list[sqlite3.Row]:
+        if not album_ids:
+            return []
+        result: list[sqlite3.Row] = []
+        for offset in range(0, len(album_ids), 700):
+            batch = album_ids[offset:offset + 700]
+            placeholders = ",".join("?" for _ in batch)
+            result.extend(
+                self.fetch_all(
+                    f"""SELECT t.*, al.title AS album_title,
+                        al.is_compilation, ar.name AS artist_name,
+                        lr.folder_path AS root_path
+                        FROM tracks t
+                        JOIN albums al ON al.id=t.album_id
+                        JOIN artists ar ON ar.id=al.artist_id
+                        JOIN library_roots lr ON lr.id=ar.root_id
+                        WHERE t.album_id IN ({placeholders})
+                        ORDER BY lr.folder_path COLLATE NOCASE,
+                                 ar.folder_path COLLATE NOCASE,
+                                 al.folder_path COLLATE NOCASE,
+                                 COALESCE(t.track_number, 999999),
+                                 t.title COLLATE NOCASE""",
+                    tuple(int(value) for value in batch),
+                )
+            )
         return result
 
     def create_playlist(self, name: str) -> int:

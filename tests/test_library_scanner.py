@@ -149,6 +149,62 @@ class LibraryScannerTests(unittest.TestCase):
             self.assertEqual(database.get_albums(), [])
             self.assertEqual(database.get_artists(), [])
 
+    def test_unchanged_files_reuse_cached_metadata_and_report_progress(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory) / "Music"
+            track = root / "Aventura" / "Álbum" / "01 tema.mp3"
+            track.parent.mkdir(parents=True)
+            track.write_bytes(b"audio estable")
+            stat = track.stat()
+            cached = {
+                str(track.resolve()): {
+                    "title": "Tema guardado",
+                    "track_artist": "Aventura",
+                    "track_number": 1,
+                    "duration": 180.0,
+                    "file_format": "MP3",
+                    "file_size": stat.st_size,
+                    "modified_ns": stat.st_mtime_ns,
+                    "file_signature": "firma",
+                    "album_year": 2020,
+                }
+            }
+            progress: list[tuple[int, int, str]] = []
+            with patch("library.scanner.read_track_details") as reader:
+                scan = scan_library(
+                    root,
+                    known_tracks=cached,
+                    progress=lambda current, total, name: progress.append(
+                        (current, total, name)
+                    ),
+                )
+            reader.assert_not_called()
+            self.assertEqual(
+                scan.artists[0].albums[0].tracks[0].title, "Tema guardado"
+            )
+            self.assertEqual(progress[-1][:2], (1, 1))
+
+    def test_manual_compilation_choice_survives_a_rescan(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            base = Path(temporary_directory)
+            root = base / "Music"
+            track = root / "Aventura" / "Álbum" / "01 tema.mp3"
+            track.parent.mkdir(parents=True)
+            track.write_bytes(b"audio estable")
+            details = SimpleNamespace(
+                title="Tema", artist="Aventura", track_number="1", year="",
+                duration_seconds=180.0, file_format="MP3",
+            )
+            database = DatabaseManager(base / "library.sqlite3")
+            database.initialize()
+            with patch("library.scanner.read_track_details", return_value=details):
+                database.synchronize_library_scan(scan_library(root))
+            album_id = int(database.get_albums(False)[0]["id"])
+            database.set_album_compilation(album_id, True)
+            with patch("library.scanner.read_track_details", return_value=details):
+                database.synchronize_library_scan(scan_library(root))
+            self.assertTrue(bool(database.get_album_by_id(album_id)["is_compilation"]))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
 #define AppName "Vinqelo Player"
-#define AppVersion "0.7.0"
+#define AppVersion "0.7.2"
 #define AppPublisher "Irán Quintero"
 #define AppExeName "Vinqelo Player.exe"
 

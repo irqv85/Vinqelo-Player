@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QRectF, QSize, QTimer, Qt, Signal
+from PySide6.QtCore import QPoint, QRectF, QSettings, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QIcon, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QApplication,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -48,6 +49,7 @@ from ui.artwork_dialog import choose_artwork, show_artwork
 from ui.album_metadata_dialog import AlbumMetadataDialog
 from ui.online_artwork_dialog import choose_online_artwork
 from ui.icons import navigation_icon
+from ui.i18n import translate_text
 
 
 def _queue(tracks: list[object]) -> list[dict[str, str]]:
@@ -88,6 +90,11 @@ def _play_payload(
     }
 
 
+def connect_track_click(tree: QTreeWidget, callback: object) -> None:
+    """Selecciona con un clic y reproduce únicamente con doble clic."""
+    tree.itemDoubleClicked.connect(callback)
+
+
 def _track_item(row: object, *, folder_columns: bool = False) -> QTreeWidgetItem:
     file_path = Path(str(row["file_path"]))
     short_location = f"{file_path.parent.name} / {file_path.name}"
@@ -105,12 +112,21 @@ def _track_item(row: object, *, folder_columns: bool = False) -> QTreeWidgetItem
 def mark_playing_track(
     tree: QTreeWidget, file_path: str, *, title_column: int = 1
 ) -> bool:
-    """Resalta la pista activa sin alterar la posición visible del usuario."""
-    scroll_bar = tree.verticalScrollBar()
-    scroll_position = scroll_bar.value()
+    """Resalta y centra la pista activa siempre que la lista pueda hacerlo."""
     active_item: QTreeWidgetItem | None = None
     iterator = QTreeWidgetItemIterator(tree)
-    row_index = 0
+    theme = str(
+        QSettings("Vinqelo", "Vinqelo Player").value(
+            "appearance/theme", "vinqelo"
+        )
+    )
+    active_color = {
+        "clementine": "#704214",
+        "amarok": "#4c2d78",
+        "emerald": "#145c49",
+        "graphite": "#3b4b60",
+        "musicmatch": "#4d7da8",
+    }.get(theme, "#154f86")
     while iterator.value() is not None:
         item = iterator.value()
         track = item.data(0, Qt.ItemDataRole.UserRole + 1) or {}
@@ -125,22 +141,22 @@ def mark_playing_track(
         for column in range(tree.columnCount()):
             item.setBackground(
                 column,
-                QBrush(
-                    QColor(
-                        "#154f86"
-                        if active
-                        else ("#0b1424" if row_index % 2 == 0 else "#0e1a2d")
-                    )
-                ),
+                QBrush(QColor(active_color)) if active else QBrush(),
             )
         if active:
             active_item = item
-        row_index += 1
         iterator += 1
     if active_item is not None:
         tree.setCurrentItem(active_item)
-        scroll_bar.setValue(scroll_position)
-        QTimer.singleShot(0, lambda: scroll_bar.setValue(scroll_position))
+        tree.scrollToItem(
+            active_item, QAbstractItemView.ScrollHint.PositionAtCenter
+        )
+        QTimer.singleShot(
+            0,
+            lambda active=active_item: tree.scrollToItem(
+                active, QAbstractItemView.ScrollHint.PositionAtCenter
+            ),
+        )
         return True
     return False
 
@@ -209,6 +225,7 @@ class ArtistsPage(QWidget):
         self.database = database
         self._artist_items: dict[str, QListWidgetItem] = {}
         self._collage_sources: dict[str, list[QPixmap]] = {}
+        self._completed_collages: set[str] = set()
         self._collage_service = ArtistCollageService(self)
         self._collage_service.cover_ready.connect(self._add_collage_cover)
         self._collage_service.album_cover_ready.connect(self._set_album_cover)
@@ -334,6 +351,8 @@ class ArtistsPage(QWidget):
         self.stack.addWidget(detail)
         self._album_sections: dict[int, QFrame] = {}
         self._album_track_trees: dict[int, QTreeWidget] = {}
+        self._track_locations: dict[str, tuple[int, QTreeWidget, QTreeWidgetItem]] = {}
+        self._marked_file = ""
         self._album_cover_labels: dict[int, QLabel] = {}
         self._album_rows: dict[int, object] = {}
         self._current_artist_queue: list[dict[str, str]] = []
@@ -344,6 +363,7 @@ class ArtistsPage(QWidget):
         self.artist_grid.clear()
         self._artist_items.clear()
         self._collage_sources.clear()
+        self._completed_collages.clear()
         default = _default_pixmap(126)
         for artist in self.database.get_artists():
             thumbnail = QPixmap(str(artist_thumbnail_path(artist["name"])))
@@ -436,6 +456,16 @@ class ArtistsPage(QWidget):
             artist_name = album["artist_name"] or album["album_artist"]
             if not album["is_compilation"] and album["title"] != "Pistas sueltas":
                 artists_with_albums.add(artist_name)
+            cached_cover = cover_cache_path(album["title"], artist_name)
+            local_cover = (
+                Path(album["cover_path"]) if album["cover_path"] else None
+            )
+            thumbnail_ready = artist_thumbnail_path(artist_name).is_file()
+            cover_ready = cached_cover.is_file() or (
+                local_cover is not None and local_cover.is_file()
+            )
+            if thumbnail_ready and cover_ready:
+                continue
             self._collage_service.request_album(
                 int(album["id"]),
                 album["title"],
@@ -443,7 +473,10 @@ class ArtistsPage(QWidget):
                 album["cover_path"],
             )
         for artist_name in (str(row["name"]) for row in self.database.get_artists()):
-            if artist_name not in artists_with_albums:
+            if (
+                artist_name not in artists_with_albums
+                and not artist_thumbnail_path(artist_name).is_file()
+            ):
                 self._collage_service.request(artist_name)
 
     def _filter_artists(self, text: str) -> None:
@@ -461,11 +494,20 @@ class ArtistsPage(QWidget):
         self.artist_grid.verticalScrollBar().setValue(0)
 
     def _add_collage_cover(self, artist: str, data: bytes) -> None:
-        if manual_artist_image_path(artist).is_file():
+        if (
+            manual_artist_image_path(artist).is_file()
+            or artist in self._completed_collages
+        ):
             return
         item = self._artist_items.get(artist)
         pixmap = QPixmap()
         if pixmap.loadFromData(data):
+            pixmap = pixmap.scaled(
+                126,
+                126,
+                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                Qt.TransformationMode.SmoothTransformation,
+            )
             sources = self._collage_sources.setdefault(artist, [])
             if len(sources) < 4:
                 sources.append(pixmap)
@@ -478,6 +520,9 @@ class ArtistsPage(QWidget):
                 pass
             if item is not None:
                 item.setIcon(QIcon(thumbnail))
+            if len(sources) >= 4:
+                self._completed_collages.add(artist)
+                self._collage_sources.pop(artist, None)
             if self.artist_heading.text() == artist:
                 for album_id, album in self._album_rows.items():
                     if album["title"] != "Pistas sueltas":
@@ -693,7 +738,7 @@ class ArtistsPage(QWidget):
                 QIcon(_album_pixmap(album, artist_name, item.icon().pixmap(150, 150)))
             )
             album_item = QListWidgetItem(
-                album_icon, album["title"]
+                album_icon, translate_text(str(album["title"]))
             )
             album_item.setTextAlignment(Qt.AlignmentFlag.AlignHCenter)
             album_item.setData(Qt.ItemDataRole.UserRole, int(album["id"]))
@@ -745,6 +790,7 @@ class ArtistsPage(QWidget):
                 widget.deleteLater()
         self._album_sections.clear()
         self._album_track_trees.clear()
+        self._track_locations.clear()
         self._album_cover_labels.clear()
         self._album_rows.clear()
 
@@ -789,7 +835,7 @@ class ArtistsPage(QWidget):
             lambda position, active_id=album_id, active_cover=cover:
             self._album_row_context_menu(active_id, active_cover, position)
         )
-        album_title = QLabel(str(album["title"]))
+        album_title = QLabel(translate_text(str(album["title"])))
         album_title.setObjectName("artistAlbumTitle")
         album_title.setWordWrap(True)
         album_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -835,7 +881,7 @@ class ArtistsPage(QWidget):
         tree.setColumnWidth(1, 340)
         tree.setColumnWidth(2, 190)
         tree.setColumnWidth(3, 90)
-        tree.itemDoubleClicked.connect(self._play_track)
+        connect_track_click(tree, self._play_track)
         tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         tree.customContextMenuRequested.connect(
             lambda position, active_tree=tree:
@@ -858,6 +904,11 @@ class ArtistsPage(QWidget):
                 ),
             )
             tree.addTopLevelItem(track_item)
+            self._track_locations[str(track["file_path"])] = (
+                album_id,
+                tree,
+                track_item,
+            )
         tree.setFixedHeight(max(145, min(500, 38 + len(tracks) * 31)))
         list_layout.addWidget(list_title)
         list_layout.addWidget(tree)
@@ -1026,58 +1077,62 @@ class ArtistsPage(QWidget):
         self, file_path: str, album_id: int | None = None
     ) -> bool:
         """Centra la fila activa cuando el diseño de álbumes ya está calculado."""
-        trees = (
-            [(album_id, self._album_track_trees.get(album_id))]
-            if album_id is not None
-            else list(self._album_track_trees.items())
-        )
-        for active_album_id, tree in trees:
-            if tree is None:
-                continue
-            for index in range(tree.topLevelItemCount()):
-                track_item = tree.topLevelItem(index)
-                payload = track_item.data(0, Qt.ItemDataRole.UserRole) or {}
-                context = payload.get("context", {}) if isinstance(payload, dict) else {}
-                if context.get("file_path") != file_path:
-                    continue
-                tree.setCurrentItem(track_item)
-                def center(
-                    active_tree: QTreeWidget = tree,
-                    active_item: QTreeWidgetItem = track_item,
-                    active_id: int = int(active_album_id),
-                ) -> None:
-                    try:
-                        active_tree.scrollToItem(
-                            active_item,
-                            QAbstractItemView.ScrollHint.PositionAtCenter,
-                        )
-                        section = self._album_sections.get(active_id)
-                        if section is not None:
-                            self.album_scroll.ensureWidgetVisible(section, 0, 0)
-                        item_rect = active_tree.visualItemRect(active_item)
-                        point = active_tree.viewport().mapTo(
-                            self.album_rows_container,
-                            QPoint(item_rect.center().x(), item_rect.center().y()),
-                        )
-                        bar = self.album_scroll.verticalScrollBar()
-                        target = point.y() - self.album_scroll.viewport().height() // 2
-                        bar.setValue(max(bar.minimum(), min(bar.maximum(), target)))
-                    except RuntimeError:
-                        pass
+        location = self._track_locations.get(file_path)
+        if location is None:
+            return False
+        active_album_id, tree, track_item = location
+        if album_id is not None and int(active_album_id) != int(album_id):
+            return False
+        try:
+            tree.setCurrentItem(track_item)
 
-                QTimer.singleShot(0, center)
-                return True
-        return False
+            def center(
+                active_tree: QTreeWidget = tree,
+                active_item: QTreeWidgetItem = track_item,
+                active_id: int = int(active_album_id),
+            ) -> None:
+                try:
+                    active_tree.scrollToItem(
+                        active_item,
+                        QAbstractItemView.ScrollHint.PositionAtCenter,
+                    )
+                    section = self._album_sections.get(active_id)
+                    if section is not None:
+                        self.album_scroll.ensureWidgetVisible(section, 0, 0)
+                    item_rect = active_tree.visualItemRect(active_item)
+                    point = active_tree.viewport().mapTo(
+                        self.album_rows_container,
+                        QPoint(item_rect.center().x(), item_rect.center().y()),
+                    )
+                    bar = self.album_scroll.verticalScrollBar()
+                    target = point.y() - self.album_scroll.viewport().height() // 2
+                    bar.setValue(max(bar.minimum(), min(bar.maximum(), target)))
+                except RuntimeError:
+                    pass
+
+            QTimer.singleShot(0, center)
+            return True
+        except RuntimeError:
+            return False
 
     def mark_playing(self, file_path: str) -> bool:
-        marked = False
-        for tree in self._album_track_trees.values():
-            marked = mark_playing_track(tree, file_path) or marked
+        previous = self._track_locations.get(self._marked_file)
+        current = self._track_locations.get(file_path)
+        if previous is not None and (
+            current is None or previous[1] is not current[1]
+        ):
+            mark_playing_track(previous[1], "")
+        if current is None:
+            self._marked_file = file_path
+            return False
+        marked = mark_playing_track(current[1], file_path)
+        self._marked_file = file_path
         return marked
 
     def set_playing_file(self, file_path: str) -> None:
         self._playing_file = file_path
         self.mark_playing(file_path)
+        self._center_visible_track(file_path)
 
 
 class AlbumsPage(CollectionPage):

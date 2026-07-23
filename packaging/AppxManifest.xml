@@ -8,7 +8,7 @@
   <Identity
     Name="irqv8.VinqeloPlayer"
     Publisher="CN=516D3D9D-99E2-4CEF-8F75-6AE32D0DFA72"
-    Version="0.7.0.0"
+    Version="0.7.2.0"
     ProcessorArchitecture="x64" />
 
   <Properties>

@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from PySide6.QtCore import QSettings, Signal
 from PySide6.QtWidgets import (
-    QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLabel, QSpinBox,
+    QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QLabel, QSpinBox,
     QTabWidget, QVBoxLayout, QWidget,
 )
 
 THEMES = {
     "vinqelo": "Vinqelo · Azul", "clementine": "Clementine · Naranja",
     "amarok": "Amarok · Morado", "emerald": "Esmeralda", "graphite": "Grafito",
+    "musicmatch": "MusicMatch clásico · Gris azulado",
 }
 LANGUAGES = {
     "es": "Español", "en": "English", "pt": "Português",
@@ -36,6 +37,7 @@ class SettingsDialog(QDialog):
         tabs.setObjectName("settingsTabs")
         tabs.addTab(self._appearance_tab(), "Apariencia")
         tabs.addTab(self._language_tab(), "Idioma")
+        tabs.addTab(self._privacy_tab(), "Privacidad")
         layout.addWidget(tabs)
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel
@@ -59,8 +61,13 @@ class SettingsDialog(QDialog):
         self.font_size.setRange(11, 17)
         self.font_size.setSuffix(" px")
         self.font_size.setValue(self.settings.value("appearance/font_size", 13, type=int))
+        self.show_menu_bar = QCheckBox("Mostrar barra de menú clásica")
+        self.show_menu_bar.setChecked(
+            self.settings.value("appearance/show_menu_bar", False, type=bool)
+        )
         form.addRow("Estilo:", self.theme)
         form.addRow("Tamaño de la tipografía:", self.font_size)
+        form.addRow("", self.show_menu_bar)
         return page
 
     def _language_tab(self) -> QWidget:
@@ -75,15 +82,40 @@ class SettingsDialog(QDialog):
         form.addRow("Idioma de la interfaz:", self.language)
         return page
 
+    def _privacy_tab(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(14, 16, 14, 16)
+        self.offline_mode = QCheckBox(
+            "No descargar información de internet (modo local)"
+        )
+        self.offline_mode.setChecked(
+            self.settings.value("privacy/offline_mode", False, type=bool)
+        )
+        note = QLabel(
+            "Usa portadas de las carpetas, imágenes elegidas manualmente "
+            "y metadatos de los archivos."
+        )
+        note.setObjectName("mutedLabel")
+        note.setWordWrap(True)
+        layout.addWidget(self.offline_mode)
+        layout.addWidget(note)
+        layout.addStretch(1)
+        return page
+
     def _save(self) -> None:
         values = {
             "theme": self.theme.currentData(), "font_size": self.font_size.value(),
             "language": self.language.currentData(),
+            "offline_mode": self.offline_mode.isChecked(),
+            "show_menu_bar": self.show_menu_bar.isChecked(),
         }
         for key, value in (
             ("appearance/theme", values["theme"]),
             ("appearance/font_size", values["font_size"]),
             ("interface/language", values["language"]),
+            ("privacy/offline_mode", values["offline_mode"]),
+            ("appearance/show_menu_bar", values["show_menu_bar"]),
         ):
             self.settings.setValue(key, value)
         self.settings.sync()
