@@ -490,3 +490,9 @@
 2026-07-23 14:40:48,169 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/a9a6b732-be1c-4cca-b6c8-ff295d569990/front-500 - server replied with status code 404
 2026-07-23 14:40:53,155 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/fd36874b-b996-4d7a-9769-2cd43cd62808/front-500 - server replied with status code 404
 2026-07-23 14:40:59,329 | INFO | library.cover_art | Portada no disponible para un lanzamiento: Error transferring https://coverartarchive.org/release/a9a6b732-be1c-4cca-b6c8-ff295d569990/front-500 - server replied with status code 404
+2026-07-24 06:36:51,710 | INFO | database.manager | Base de datos preparada en C:\Users\IRQV8\Documents\VINQ\Vinqelo player\Vinqelo Player\database\library.sqlite3
+2026-07-24 06:36:54,425 | INFO | player.controller | Motor VLC disponible: 3.0.23 Vetinari
+2026-07-24 06:36:55,609 | INFO | __main__ | Vinqelo Player iniciado
+2026-07-24 06:36:56,908 | INFO | player.windows_media_session | Sesión multimedia de Windows activada
+2026-07-24 06:43:31,759 | INFO | ui.main_window | Sincronizando 1 raíz(es) de biblioteca
+2026-07-24 06:43:35,873 | INFO | ui.main_window | Biblioteca sincronizada: 0 movida(s), 236 eliminada(s)
